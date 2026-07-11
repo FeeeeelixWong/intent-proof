@@ -1,0 +1,30 @@
+{
+  "name": "solana-agent-receipts",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.98.4",
+    "buffer": "^6.0.3",
+    "lucide-react": "^1.16.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "oxlint": "^1.73.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.13",
+    "vitest": "^4.1.6"
+  }
+}
