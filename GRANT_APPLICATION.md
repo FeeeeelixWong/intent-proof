@@ -43,6 +43,6 @@ I will use the grant to cover a month of AI coding tooling while I finish the pu
 
 ## Links to fill after publication
 
-- Repository: `REPOSITORY_URL`
-- Live demo: `DEPLOYMENT_URL`
-- Demo video: `DEMO_VIDEO_URL`
+- Repository: https://github.com/FeeeeelixWong/intent-proof
+- Live demo: https://feeeeelixwong.github.io/intent-proof/
+- Demo video: Not required for the initial grant application. Record before the second-tranche submission if Superteam requests it.
