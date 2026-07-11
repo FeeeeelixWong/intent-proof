@@ -23,19 +23,31 @@ import { evaluateAction, type ActionDraft, type AgentPolicy, type PolicyDecision
 import { createReceipt, shortHash, type AuditReceipt } from './domain/receipt'
 import './App.css'
 
+interface SolanaWalletProvider {
+  connect: () => Promise<{ publicKey: { toBase58: () => string } }>
+  isPhantom?: boolean
+  signAndSendTransaction: (transaction: unknown) => Promise<{ signature: string }>
+}
+
 declare global {
   interface Window {
-    solana?: {
-      connect: () => Promise<{ publicKey: { toBase58: () => string } }>
-      isPhantom?: boolean
-      signAndSendTransaction: (transaction: unknown) => Promise<{ signature: string }>
+    phantom?: {
+      solana?: SolanaWalletProvider
     }
+    solana?: SolanaWalletProvider
   }
 }
 
 const DEVNET_RPC = 'https://api.devnet.solana.com'
 const MEMO_PROGRAM_ADDRESS = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'
 const agentId = 'audit-agent.local'
+
+function getPhantomProvider(): SolanaWalletProvider | null {
+  // Other wallets can overwrite window.solana, so prefer Phantom's namespace.
+  if (window.phantom?.solana?.isPhantom) return window.phantom.solana
+  if (window.solana?.isPhantom) return window.solana
+  return null
+}
 
 const defaultPolicy: AgentPolicy = {
   allowedRecipients: [],
@@ -141,13 +153,14 @@ function App() {
   }
 
   async function connectWallet() {
-    if (!window.solana?.isPhantom) {
+    const provider = getPhantomProvider()
+    if (!provider) {
       setNotice('Phantom was not detected. Install Phantom and switch it to Devnet to submit a transfer.')
       return
     }
 
     try {
-      const response = await window.solana.connect()
+      const response = await provider.connect()
       setWalletAddress(response.publicKey.toBase58())
       setNotice('Devnet wallet connected. No transaction has been requested.')
     } catch {
@@ -160,7 +173,8 @@ function App() {
       setNotice('Assess the action and resolve any blocked safeguards first.')
       return
     }
-    if (!walletAddress || !window.solana) {
+    const provider = getPhantomProvider()
+    if (!walletAddress || !provider) {
       setNotice('Connect a Phantom wallet on Devnet before submitting.')
       return
     }
@@ -187,7 +201,7 @@ function App() {
       transaction.feePayer = payer
       transaction.recentBlockhash = latest.blockhash
 
-      const { signature } = await window.solana.signAndSendTransaction(transaction)
+      const { signature } = await provider.signAndSendTransaction(transaction)
       await connection.confirmTransaction({ ...latest, signature }, 'confirmed')
       const receipt = await createReceipt({
         action: actionDraft,
