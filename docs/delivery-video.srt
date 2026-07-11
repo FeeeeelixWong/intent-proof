@@ -1,0 +1,15 @@
+1
+00:00:00,000 --> 00:00:07,000
+IntentProof keeps agent actions inside local policy and user-held signing control.
+
+2
+00:00:07,000 --> 00:00:15,000
+Unsafe actions are blocked before a wallet is asked to sign.
+
+3
+00:00:15,000 --> 00:00:25,000
+Approved actions create SHA-256-linked receipts that can be exported as evidence.
+
+4
+00:00:25,000 --> 00:00:34,000
+At the Devnet signing boundary, only the operator's Phantom wallet can authorize the transaction.
