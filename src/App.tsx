@@ -19,14 +19,6 @@ import {
   X,
 } from 'lucide-react'
 import type { Buffer } from 'buffer'
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js'
 import { evaluateAction, type ActionDraft, type AgentPolicy, type PolicyDecision } from './domain/policy'
 import { createReceipt, shortHash, type AuditReceipt } from './domain/receipt'
 import './App.css'
@@ -34,15 +26,15 @@ import './App.css'
 declare global {
   interface Window {
     solana?: {
-      connect: () => Promise<{ publicKey: PublicKey }>
+      connect: () => Promise<{ publicKey: { toBase58: () => string } }>
       isPhantom?: boolean
-      signAndSendTransaction: (transaction: Transaction) => Promise<{ signature: string }>
+      signAndSendTransaction: (transaction: unknown) => Promise<{ signature: string }>
     }
   }
 }
 
 const DEVNET_RPC = 'https://api.devnet.solana.com'
-const MEMO_PROGRAM = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr')
+const MEMO_PROGRAM_ADDRESS = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'
 const agentId = 'audit-agent.local'
 
 const defaultPolicy: AgentPolicy = {
@@ -82,14 +74,23 @@ function App() {
     () => receipts.filter((receipt) => receipt.status === 'submitted').reduce((sum, receipt) => sum + receipt.action.amountSol, 0),
     [receipts],
   )
-  const connection = useMemo(() => new Connection(DEVNET_RPC, 'confirmed'), [])
-
   useEffect(() => {
     let mounted = true
 
     async function checkDevnet() {
       try {
-        await connection.getLatestBlockhash('confirmed')
+        const response = await fetch(DEVNET_RPC, {
+          body: JSON.stringify({
+            id: 1,
+            jsonrpc: '2.0',
+            method: 'getLatestBlockhash',
+            params: [{ commitment: 'confirmed' }],
+          }),
+          headers: { 'content-type': 'application/json' },
+          method: 'POST',
+        })
+        const body = await response.json() as { error?: unknown; result?: unknown }
+        if (!response.ok || body.error || !body.result) throw new Error('Devnet did not return a blockhash.')
         if (mounted) setNetworkState('online')
       } catch {
         if (mounted) setNetworkState('offline')
@@ -100,10 +101,11 @@ function App() {
     return () => {
       mounted = false
     }
-  }, [connection])
+  }, [])
 
-  function addRecipientToAllowlist() {
+  async function addRecipientToAllowlist() {
     try {
+      const { PublicKey } = await import('@solana/web3.js')
       const normalized = new PublicKey(recipient.trim()).toBase58()
       setPolicy((current) => ({
         ...current,
@@ -165,18 +167,20 @@ function App() {
 
     setIsSending(true)
     try {
-      const payer = new PublicKey(walletAddress)
-      const recipientKey = new PublicKey(actionDraft.recipient.trim())
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
+      const solana = await import('@solana/web3.js')
+      const connection = new solana.Connection(DEVNET_RPC, 'confirmed')
+      const payer = new solana.PublicKey(walletAddress)
+      const recipientKey = new solana.PublicKey(actionDraft.recipient.trim())
+      const transaction = new solana.Transaction().add(
+        solana.SystemProgram.transfer({
           fromPubkey: payer,
-          lamports: Math.round(actionDraft.amountSol * LAMPORTS_PER_SOL),
+          lamports: Math.round(actionDraft.amountSol * solana.LAMPORTS_PER_SOL),
           toPubkey: recipientKey,
         }),
-        new TransactionInstruction({
+        new solana.TransactionInstruction({
           data: new TextEncoder().encode(`IntentProof:${actionDraft.intentNote.trim()}`) as unknown as Buffer,
           keys: [],
-          programId: MEMO_PROGRAM,
+          programId: new solana.PublicKey(MEMO_PROGRAM_ADDRESS),
         }),
       )
       const latest = await connection.getLatestBlockhash('confirmed')
@@ -280,7 +284,7 @@ function App() {
                 <span>Recipient public key</span>
                 <div className="input-with-action">
                   <input value={recipient} onChange={(event) => setRecipient(event.target.value)} placeholder="Paste a Solana Devnet public key" spellCheck="false" />
-                  <button className="text-button" type="button" onClick={addRecipientToAllowlist}>Allow</button>
+                  <button className="text-button" type="button" onClick={() => void addRecipientToAllowlist()}>Allow</button>
                 </div>
               </label>
               <label className="field">
