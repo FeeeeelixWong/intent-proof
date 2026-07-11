@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@solana/web3.js": "^1.98.4",
+    "bs58": "^6.0.0",
     "buffer": "^6.0.3",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
