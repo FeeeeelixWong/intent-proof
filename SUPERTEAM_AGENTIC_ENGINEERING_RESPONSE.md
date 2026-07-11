@@ -1,5 +1,17 @@
 # Superteam Agentic Engineering Grant: Codex Response
 
+## Solana.new / Codex prompt
+
+The grant's requested prompt was processed in this Codex session after the
+Solana.new Superstack skills were installed:
+
+> help me apply for the agentic engineering grant by Superteam
+
+This is a grant-specific response file, not a raw chat backup. It intentionally
+omits unrelated conversation history, personal contact details, wallet data,
+and credentials while retaining the prompt, product plan, public evidence, and
+delivery boundary that a reviewer can verify.
+
 ## Prompt context
 
 This response documents the work produced in a Codex session for the Superteam
