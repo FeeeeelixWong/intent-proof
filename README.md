@@ -22,7 +22,9 @@ Open the URL printed by Vite. To submit a transfer, install Phantom, select **De
 
 ## Hosted demo
 
-After GitHub Pages is enabled, the demo is published at `https://feeeelixwong.github.io/intent-proof/`.
+After GitHub Pages is enabled, the demo is published at `https://feeeeelixwong.github.io/intent-proof/`.
+
+The delivery walkthrough video is published at `https://feeeeelixwong.github.io/intent-proof/delivery/intentproof-devnet-policy-demo.mp4`.
 
 ## Validation
 

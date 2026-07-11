@@ -1,5 +1,9 @@
 # IntentProof Delivery Walkthrough
 
+## Delivery video
+
+https://feeeeelixwong.github.io/intent-proof/delivery/intentproof-devnet-policy-demo.mp4
+
 ## Purpose
 
 IntentProof is a local-first control and evidence layer for an AI agent that
