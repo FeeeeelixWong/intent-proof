@@ -21,13 +21,16 @@ receipt chain.
    at or below `0.050 SOL`, and retain a clear intent note. Choose **Assess
    action** again. The local policy returns `ALLOW` and appends a second,
    hash-linked receipt.
-4. Connect Phantom with its network set to **Devnet**. The app never receives
+4. The approval is bound to that exact recipient, amount, and intent note. If
+   any of those fields changes, IntentProof requires a fresh assessment before
+   it can request a wallet signature.
+5. Connect Phantom with its network set to **Devnet**. The app never receives
    a seed phrase or private key.
-5. Choose **Approve & send on Devnet** and inspect the Phantom transaction
+6. Choose **Approve & send on Devnet** and inspect the Phantom transaction
    before approving it. The transaction contains the SOL transfer and an
    IntentProof Memo instruction. On confirmation, the transaction signature is
    stored with the submitted receipt and linked to Solana Explorer.
-6. Use **Export all receipt JSON** to retain the local audit evidence.
+7. Use **Export all receipt JSON** to retain the local audit evidence.
 
 ## Verification status
 

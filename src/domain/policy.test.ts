@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evaluateAction, type AgentPolicy } from './policy'
+import { actionFingerprint, evaluateAction, type AgentPolicy } from './policy'
 
 const policy: AgentPolicy = {
   allowedRecipients: ['Recipient111'],
@@ -39,5 +39,29 @@ describe('evaluateAction', () => {
 
     expect(result.decision).toBe('BLOCK')
     expect(result.reason).toBe('Daily budget')
+  })
+
+  it('binds an approval to the recipient, amount, and declared intent', () => {
+    const approved = actionFingerprint({
+      amountSol: 0.025,
+      intentNote: 'Pay devnet test invoice',
+      recipient: 'Recipient111',
+    })
+
+    expect(actionFingerprint({
+      amountSol: 0.025,
+      intentNote: 'Pay a different invoice',
+      recipient: 'Recipient111',
+    })).not.toBe(approved)
+    expect(actionFingerprint({
+      amountSol: 0.03,
+      intentNote: 'Pay devnet test invoice',
+      recipient: 'Recipient111',
+    })).not.toBe(approved)
+    expect(actionFingerprint({
+      amountSol: 0.025,
+      intentNote: 'Pay devnet test invoice',
+      recipient: 'Recipient222',
+    })).not.toBe(approved)
   })
 })

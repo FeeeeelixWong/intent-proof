@@ -5,6 +5,7 @@ IntentProof is a local-first guardrail and evidence ledger for AI agents that pr
 ## What it does
 
 - Evaluates an agent's proposed SOL transfer against a local recipient allowlist, per-action budget, daily budget, and required intent note.
+- Binds each approval to the exact recipient, amount, and intent note that was assessed; editing any of them requires another policy decision.
 - Builds and signs a real **Solana Devnet** transfer only after the local policy allows it and the operator confirms it in Phantom.
 - Adds the declared intent as an on-chain Memo instruction.
 - Produces an exportable SHA-256-linked receipt for every allowed or blocked decision in the current browser session.

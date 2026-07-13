@@ -19,6 +19,15 @@ export type PolicyDecision = {
 
 const trimAddress = (value: string) => value.trim()
 
+// An approval is only valid for the exact action the operator assessed.
+export function actionFingerprint(draft: ActionDraft): string {
+  return JSON.stringify({
+    amountSol: draft.amountSol,
+    intentNote: draft.intentNote.trim(),
+    recipient: trimAddress(draft.recipient),
+  })
+}
+
 export function evaluateAction(
   draft: ActionDraft,
   policy: AgentPolicy,

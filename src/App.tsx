@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Activity,
   ArrowUpRight,
@@ -19,7 +19,13 @@ import {
   X,
 } from 'lucide-react'
 import type { Buffer } from 'buffer'
-import { evaluateAction, type ActionDraft, type AgentPolicy, type PolicyDecision } from './domain/policy'
+import {
+  actionFingerprint,
+  evaluateAction,
+  type ActionDraft,
+  type AgentPolicy,
+  type PolicyDecision,
+} from './domain/policy'
 import {
   describeProviderError,
   getPhantomProvider,
@@ -67,6 +73,8 @@ function App() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
   const [networkState, setNetworkState] = useState<'checking' | 'online' | 'offline'>('checking')
   const [decision, setDecision] = useState<PolicyDecision | null>(null)
+  const [assessedActionFingerprint, setAssessedActionFingerprint] = useState<string | null>(null)
+  const approvedActionFingerprintRef = useRef<string | null>(null)
   const [receipts, setReceipts] = useState<AuditReceipt[]>([])
   const [isSending, setIsSending] = useState(false)
   const [notice, setNotice] = useState('Ready to assess an agent action.')
@@ -75,6 +83,10 @@ function App() {
     () => ({ amountSol: Number(amount), intentNote, recipient }),
     [amount, intentNote, recipient],
   )
+  const currentActionFingerprint = useMemo(() => actionFingerprint(actionDraft), [actionDraft])
+  const isAssessmentCurrent = decision?.decision === 'ALLOW'
+    && assessedActionFingerprint === currentActionFingerprint
+    && approvedActionFingerprintRef.current === currentActionFingerprint
   const spentTodaySol = useMemo(
     () => receipts.filter((receipt) => receipt.status === 'submitted').reduce((sum, receipt) => sum + receipt.action.amountSol, 0),
     [receipts],
@@ -108,6 +120,18 @@ function App() {
     }
   }, [])
 
+  function invalidateApproval() {
+    const hadApproval = approvedActionFingerprintRef.current !== null
+    approvedActionFingerprintRef.current = null
+    setAssessedActionFingerprint(null)
+    if (decision?.decision === 'ALLOW') {
+      setDecision(null)
+    }
+    if (hadApproval) {
+      setNotice('The draft changed after approval. Assess it again before submitting.')
+    }
+  }
+
   async function addRecipientToAllowlist() {
     try {
       const { PublicKey } = await import('@solana/web3.js')
@@ -118,6 +142,7 @@ function App() {
           ? current.allowedRecipients
           : [...current.allowedRecipients, normalized],
       }))
+      invalidateApproval()
       setRecipient(normalized)
       setNotice('Recipient added to the local allowlist.')
     } catch {
@@ -125,9 +150,13 @@ function App() {
     }
   }
 
-  async function recordDecision(nextDecision: PolicyDecision, status: AuditReceipt['status']) {
+  async function recordDecision(
+    nextDecision: PolicyDecision,
+    status: AuditReceipt['status'],
+    action: ActionDraft = actionDraft,
+  ) {
     const receipt = await createReceipt({
-      action: actionDraft,
+      action,
       agentId,
       decision: nextDecision.decision,
       previousHash: receipts.at(-1)?.hash ?? null,
@@ -139,9 +168,13 @@ function App() {
   }
 
   async function assessAction() {
-    const nextDecision = evaluateAction(actionDraft, policy, spentTodaySol)
+    const assessedAction = { ...actionDraft }
+    const nextDecision = evaluateAction(assessedAction, policy, spentTodaySol)
+    const fingerprint = actionFingerprint(assessedAction)
     setDecision(nextDecision)
-    await recordDecision(nextDecision, nextDecision.decision === 'ALLOW' ? 'approved' : 'blocked')
+    setAssessedActionFingerprint(fingerprint)
+    approvedActionFingerprintRef.current = nextDecision.decision === 'ALLOW' ? fingerprint : null
+    await recordDecision(nextDecision, nextDecision.decision === 'ALLOW' ? 'approved' : 'blocked', assessedAction)
     setNotice(nextDecision.decision === 'ALLOW' ? 'Agent action is approved locally. Connect a Devnet wallet to submit.' : `Action blocked: ${nextDecision.reason}.`)
   }
 
@@ -162,10 +195,21 @@ function App() {
   }
 
   async function sendApprovedAction() {
-    if (decision?.decision !== 'ALLOW') {
-      setNotice('Assess the action and resolve any blocked safeguards first.')
+    if (!isAssessmentCurrent || approvedActionFingerprintRef.current !== currentActionFingerprint) {
+      setNotice('Assess this exact draft and resolve any blocked safeguards before submitting.')
       return
     }
+
+    const finalDecision = evaluateAction(actionDraft, policy, spentTodaySol)
+    if (finalDecision.decision !== 'ALLOW') {
+      setDecision(finalDecision)
+      setAssessedActionFingerprint(null)
+      approvedActionFingerprintRef.current = null
+      await recordDecision(finalDecision, 'blocked')
+      setNotice(`Action blocked before wallet signing: ${finalDecision.reason}.`)
+      return
+    }
+
     const provider = getPhantomProvider(window)
     if (!walletAddress || !provider) {
       setNotice('Connect a Phantom wallet on Devnet before submitting.')
@@ -206,6 +250,9 @@ function App() {
         transactionSignature: signature,
       })
       setReceipts((current) => [...current, receipt])
+      setDecision(null)
+      setAssessedActionFingerprint(null)
+      approvedActionFingerprintRef.current = null
       setNotice('Devnet transfer confirmed and appended to the local evidence chain.')
     } catch (error) {
       const message = describeProviderError(error)
@@ -237,6 +284,7 @@ function App() {
   }
 
   function loadBlockedExample() {
+    invalidateApproval()
     setAmount('0.125')
     setIntentNote('Attempt a budget-breaking transfer')
     setNotice('Loaded a deliberately blocked example. Select Assess action to inspect the safeguards.')
@@ -290,13 +338,13 @@ function App() {
               <label className="field field-wide">
                 <span>Recipient public key</span>
                 <div className="input-with-action">
-                  <input value={recipient} onChange={(event) => setRecipient(event.target.value)} placeholder="Paste a Solana Devnet public key" spellCheck="false" />
+                  <input value={recipient} onChange={(event) => { invalidateApproval(); setRecipient(event.target.value) }} placeholder="Paste a Solana Devnet public key" spellCheck="false" />
                   <button className="text-button" type="button" onClick={() => void addRecipientToAllowlist()}>Allow</button>
                 </div>
               </label>
               <label className="field">
                 <span>Amount</span>
-                <div className="amount-input"><input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="decimal" /><span>SOL</span></div>
+                <div className="amount-input"><input value={amount} onChange={(event) => { invalidateApproval(); setAmount(event.target.value) }} inputMode="decimal" /><span>SOL</span></div>
               </label>
               <label className="field">
                 <span>Agent identity</span>
@@ -304,7 +352,7 @@ function App() {
               </label>
               <label className="field field-wide">
                 <span>Intent note</span>
-                <textarea value={intentNote} onChange={(event) => setIntentNote(event.target.value)} rows={3} placeholder="Why should this agent perform the action?" />
+                <textarea value={intentNote} onChange={(event) => { invalidateApproval(); setIntentNote(event.target.value) }} rows={3} placeholder="Why should this agent perform the action?" />
                 <small>Written into the Devnet transaction memo after policy approval.</small>
               </label>
             </div>
@@ -341,7 +389,7 @@ function App() {
 
             <div className="surface-footer">
               <span className="policy-summary">Per action <strong>{policy.maxAmountSol.toFixed(3)} SOL</strong> · Daily <strong>{policy.dailyLimitSol.toFixed(3)} SOL</strong></span>
-              <button className="button primary" type="button" disabled={decision?.decision !== 'ALLOW' || isSending} onClick={() => void sendApprovedAction()}>
+              <button className="button primary" type="button" disabled={!isAssessmentCurrent || isSending} onClick={() => void sendApprovedAction()}>
                 {isSending ? <LoaderCircle className="spin" size={17} /> : <Send size={17} />}
                 {isSending ? 'Submitting...' : 'Approve & send on Devnet'}
               </button>
