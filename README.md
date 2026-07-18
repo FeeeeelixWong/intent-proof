@@ -27,6 +27,9 @@ After GitHub Pages is enabled, the demo is published at `https://feeeeelixwong.g
 
 The delivery walkthrough video is published at `https://feeeeelixwong.github.io/intent-proof/delivery/intentproof-devnet-policy-demo.mp4`.
 
+The grant delivery evidence, release, CI run, and reproduction steps are collected in
+[`docs/FINAL_TRANCHE.md`](docs/FINAL_TRANCHE.md).
+
 ## Validation
 
 ```bash
@@ -45,3 +48,7 @@ npm run build
 ## Grant fit
 
 This project is a working Solana product for the Superteam Agentic Engineering Grant. It demonstrates an agent-native pattern: agents can propose actions, while users retain custody and receive a verifiable, human-readable trail of every decision and transaction.
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).
