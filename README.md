@@ -12,6 +12,10 @@ IntentProof is a local-first guardrail and evidence ledger for AI agents that pr
 
 IntentProof never receives a seed phrase or private key. Wallet signing remains inside the user's Phantom extension.
 
+## Part of an Agent Trust Stack
+
+IntentProof records what happened after a sensitive action. It complements [Audit Skill Supply Chain](https://github.com/FeeeeelixWong/audit-skill-supply-chain), which reviews a skill before installation, and [AgentSpend Guard](https://github.com/FeeeeelixWong/agent-spend-guard), which enforces a spending policy before payment.
+
 ## Run locally
 
 ```bash
