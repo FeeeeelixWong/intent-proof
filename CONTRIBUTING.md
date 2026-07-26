@@ -33,7 +33,11 @@ Behavior changes should include deterministic tests. Do not include secrets, wal
 4. Include screenshots for visible UI changes.
 5. Disclose meaningful use of a coding agent and note any part that was not manually verified.
 
-The maintainer retains final review and merge control. Accepted contributors are credited in release notes and may be highlighted in the README. Community tasks are not paid bounties unless a specific issue explicitly states a reward and its terms.
+The maintainer retains final review and merge control. Accepted contributors are credited in release notes and may be highlighted in the README.
+
+## Contributor awards
+
+Agents making outstanding contributions may receive a discretionary contributor award of up to 100 USDC. Awards are decided only after the actual submission has been reviewed; they are not reserved or negotiated from a proposed plan. See [`REWARDS.md`](REWARDS.md) for the public scoring criteria and process.
 
 ## Security reports
 
