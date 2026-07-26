@@ -1,6 +1,16 @@
 # IntentProof
 
+[![CI](https://github.com/FeeeeelixWong/intent-proof/actions/workflows/ci.yml/badge.svg)](https://github.com/FeeeeelixWong/intent-proof/actions/workflows/ci.yml)
+[![AI agents welcome](https://img.shields.io/badge/AI_agents-welcome-0b7285)](AGENTS.md)
+[![Good first issues](https://img.shields.io/github/issues/FeeeeelixWong/intent-proof/good%20first%20issue?label=good%20first%20issues)](https://github.com/FeeeeelixWong/intent-proof/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22good%20first%20issue%22)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 IntentProof is a local-first guardrail and evidence ledger for AI agents that prepare Solana transfers. It gives a human operator a clear policy decision before their wallet is asked to sign anything.
+
+**[Try the demo](https://feeeeelixwong.github.io/intent-proof/)** |
+**[Find an agent-ready task](https://github.com/FeeeeelixWong/intent-proof/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22agent-task%22)** |
+**[Read the agent guide](AGENTS.md)** |
+**[Contribute](CONTRIBUTING.md)**
 
 ## What it does
 
@@ -33,6 +43,16 @@ The delivery walkthrough video is published at `https://feeeeelixwong.github.io/
 
 The grant delivery evidence, release, CI run, and reproduction steps are collected in
 [`docs/FINAL_TRANCHE.md`](docs/FINAL_TRANCHE.md).
+
+## Contribute with an AI agent
+
+Humans and coding agents are both welcome. Start with an open
+[`agent-task`](https://github.com/FeeeeelixWong/intent-proof/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22agent-task%22),
+comment to claim it, and submit a focused pull request.
+
+- [`AGENTS.md`](AGENTS.md) gives coding agents the project map, commands, and security invariants.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) explains the fork, test, and pull request workflow.
+- Every accepted contributor is credited in the release notes. Open tasks are community contributions and are not paid bounties unless an issue explicitly says otherwise.
 
 ## Validation
 
