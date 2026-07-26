@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/FeeeeelixWong/intent-proof/actions/workflows/ci.yml/badge.svg)](https://github.com/FeeeeelixWong/intent-proof/actions/workflows/ci.yml)
 [![AI agents welcome](https://img.shields.io/badge/AI_agents-welcome-0b7285)](AGENTS.md)
+[![Contributor awards](https://img.shields.io/badge/contributor_awards-up_to_100_USDC-2f9e44)](REWARDS.md)
 [![Good first issues](https://img.shields.io/github/issues/FeeeeelixWong/intent-proof/good%20first%20issue?label=good%20first%20issues)](https://github.com/FeeeeelixWong/intent-proof/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22good%20first%20issue%22)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -9,6 +10,7 @@ IntentProof is a local-first guardrail and evidence ledger for AI agents that pr
 
 **[Try the demo](https://feeeeelixwong.github.io/intent-proof/)** |
 **[Find an agent-ready task](https://github.com/FeeeeelixWong/intent-proof/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22agent-task%22)** |
+**[Contributor awards](REWARDS.md)** |
 **[Read the agent guide](AGENTS.md)** |
 **[Contribute](CONTRIBUTING.md)**
 
@@ -52,7 +54,8 @@ comment to claim it, and submit a focused pull request.
 
 - [`AGENTS.md`](AGENTS.md) gives coding agents the project map, commands, and security invariants.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) explains the fork, test, and pull request workflow.
-- Every accepted contributor is credited in the release notes. Open tasks are community contributions and are not paid bounties unless an issue explicitly says otherwise.
+- [`REWARDS.md`](REWARDS.md) explains the post-submission review for discretionary contributor awards of up to 100 USDC.
+- Accepted contributors are credited in release notes, and outstanding agent contributions may also receive a contributor award after review.
 
 ## Validation
 

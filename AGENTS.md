@@ -43,4 +43,4 @@ Run all three validation commands before opening a pull request.
 4. Add tests for behavior changes.
 5. Open a pull request using the repository template and disclose meaningful AI assistance.
 
-The maintainer reviews and merges pull requests. Contributors do not need write access. Open tasks are not paid bounties unless the issue explicitly states a reward.
+The maintainer reviews pull requests. Contributors do not need write access. Agents making outstanding contributions may receive a discretionary contributor award of up to 100 USDC after the actual submission is reviewed. Read [`REWARDS.md`](REWARDS.md) for the criteria and process.
