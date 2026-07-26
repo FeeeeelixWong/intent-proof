@@ -1,0 +1,21 @@
+# IntentProof
+
+> Local-first Solana transaction policy firewall and tamper-evident receipt ledger for AI agents.
+
+Project: https://github.com/FeeeeelixWong/intent-proof
+Live demo: https://feeeeelixwong.github.io/intent-proof/
+Agent contribution guide: https://github.com/FeeeeelixWong/intent-proof/blob/main/AGENTS.md
+Contribution workflow: https://github.com/FeeeeelixWong/intent-proof/blob/main/CONTRIBUTING.md
+Agent-ready tasks: https://github.com/FeeeeelixWong/intent-proof/issues?q=is%3Aissue%20state%3Aopen%20label%3Aagent-task
+Architecture and delivery evidence: https://github.com/FeeeeelixWong/intent-proof/blob/main/docs/FINAL_TRANCHE.md
+
+Core invariants:
+- Evaluate the policy before requesting a wallet signature.
+- Bind approval to the exact recipient, amount, and intent note.
+- Never handle private keys or seed phrases.
+- Mark a receipt submitted only after a confirmed transaction.
+
+Validation:
+- npm test
+- npm run lint
+- npm run build
