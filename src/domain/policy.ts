@@ -8,6 +8,7 @@ export type AgentPolicy = {
 export type ActionDraft = {
   amountSol: number
   intentNote: string
+  network: string
   recipient: string
 }
 
@@ -24,6 +25,7 @@ export function actionFingerprint(draft: ActionDraft): string {
   return JSON.stringify({
     amountSol: draft.amountSol,
     intentNote: draft.intentNote.trim(),
+    network: draft.network,
     recipient: trimAddress(draft.recipient),
   })
 }

@@ -7,11 +7,12 @@ const policy: AgentPolicy = {
   maxAmountSol: 0.05,
   requireIntentNote: true,
 }
+const network = 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1'
 
 describe('evaluateAction', () => {
   it('allows an action that satisfies every local safeguard', () => {
     const result = evaluateAction(
-      { amountSol: 0.025, intentNote: 'Pay devnet test invoice', recipient: 'Recipient111' },
+      { amountSol: 0.025, intentNote: 'Pay devnet test invoice', network, recipient: 'Recipient111' },
       policy,
       0.1,
     )
@@ -21,7 +22,7 @@ describe('evaluateAction', () => {
 
   it('blocks a recipient that was not locally approved', () => {
     const result = evaluateAction(
-      { amountSol: 0.025, intentNote: 'Pay devnet test invoice', recipient: 'Unknown111' },
+      { amountSol: 0.025, intentNote: 'Pay devnet test invoice', network, recipient: 'Unknown111' },
       policy,
       0,
     )
@@ -32,7 +33,7 @@ describe('evaluateAction', () => {
 
   it('blocks a transfer that would exceed the remaining daily budget', () => {
     const result = evaluateAction(
-      { amountSol: 0.025, intentNote: 'Pay devnet test invoice', recipient: 'Recipient111' },
+      { amountSol: 0.025, intentNote: 'Pay devnet test invoice', network, recipient: 'Recipient111' },
       policy,
       0.19,
     )
@@ -45,23 +46,33 @@ describe('evaluateAction', () => {
     const approved = actionFingerprint({
       amountSol: 0.025,
       intentNote: 'Pay devnet test invoice',
+      network,
       recipient: 'Recipient111',
     })
 
     expect(actionFingerprint({
       amountSol: 0.025,
       intentNote: 'Pay a different invoice',
+      network,
       recipient: 'Recipient111',
     })).not.toBe(approved)
     expect(actionFingerprint({
       amountSol: 0.03,
       intentNote: 'Pay devnet test invoice',
+      network,
       recipient: 'Recipient111',
     })).not.toBe(approved)
     expect(actionFingerprint({
       amountSol: 0.025,
       intentNote: 'Pay devnet test invoice',
+      network,
       recipient: 'Recipient222',
+    })).not.toBe(approved)
+    expect(actionFingerprint({
+      amountSol: 0.025,
+      intentNote: 'Pay devnet test invoice',
+      network: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
+      recipient: 'Recipient111',
     })).not.toBe(approved)
   })
 })

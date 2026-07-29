@@ -9,6 +9,7 @@ IntentProof is a local-first policy evidence layer for AI-agent payments. The ho
 ## Project map
 
 - `src/domain/policy.ts`: deterministic policy evaluation and action fingerprints.
+- `src/domain/chain-registry.ts`: network manifests, namespace adapters, and explorer resolution.
 - `src/domain/receipt.ts`: versioned receipt types and canonical SHA-256 hashing.
 - `src/domain/receipt-chain.ts`: serialized receipt append queue.
 - `src/domain/receipt-ledger.ts`: chain and exported-bundle verification.
@@ -39,7 +40,10 @@ Run all three validation commands before opening a pull request.
 5. Policy and receipt logic must remain deterministic and independently testable.
 6. A receipt appender must link against the latest successfully committed receipt.
 7. Raw x402 authorization payloads must not be persisted in evidence receipts.
-8. Do not add analytics, remote persistence, or production-mainnet behavior without an explicit issue.
+8. Network identifiers must use the x402 CAIP-2-style `namespace:reference` form.
+9. A new network requires registry and invalid-input tests; a new namespace requires an adapter.
+10. Evidence support must never be presented as real wallet or facilitator execution support.
+11. Do not add analytics, remote persistence, or production-mainnet behavior without an explicit issue.
 
 ## Contribution workflow
 

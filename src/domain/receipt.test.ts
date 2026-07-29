@@ -9,6 +9,7 @@ import {
 const action = {
   amountSol: 0.025,
   intentNote: 'Pay approved devnet invoice',
+  network: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1',
   recipient: 'Recipient111',
 }
 
@@ -64,6 +65,7 @@ describe('audit receipts', () => {
         recipient: hashableReceipt.action.recipient,
         intentNote: hashableReceipt.action.intentNote,
         amountSol: hashableReceipt.action.amountSol,
+        network: hashableReceipt.action.network,
       },
     }
 

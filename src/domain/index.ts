@@ -1,4 +1,21 @@
 export {
+  ChainRegistry,
+  NETWORK_IDS,
+  createDefaultChainRegistry,
+  createPatternChainAdapter,
+  defaultChainRegistry,
+  evmChainAdapter,
+  parseNetworkId,
+  solanaChainAdapter,
+  validateReceiptWithDefaultRegistry,
+  type ChainAdapter,
+  type ChainNetworkDefinition,
+  type ChainRegistryIssue,
+  type NetworkEnvironment,
+  type ParsedNetworkId,
+  type PatternChainAdapterDefinition,
+} from './chain-registry'
+export {
   AUDIT_RECEIPT_SCHEMA,
   calculateReceiptHash,
   canonicalJson,
@@ -24,6 +41,7 @@ export {
   type ReceiptChainIssue,
   type ReceiptChainVerification,
   type ReceiptLedgerBundle,
+  type ReceiptValidator,
 } from './receipt-ledger'
 export {
   createX402PaymentEvidence,
