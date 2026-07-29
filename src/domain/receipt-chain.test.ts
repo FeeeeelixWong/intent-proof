@@ -5,6 +5,7 @@ import { createReceiptAppender } from './receipt-chain'
 const action: ActionDraft = {
   amountSol: 0.01,
   intentNote: 'Concurrent append regression',
+  network: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1',
   recipient: '11111111111111111111111111111111',
 }
 

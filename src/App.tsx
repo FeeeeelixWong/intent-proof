@@ -32,6 +32,11 @@ import {
   signAndSendWithPhantom,
   type SolanaWalletProvider,
 } from './domain/phantom'
+import {
+  NETWORK_IDS,
+  defaultChainRegistry,
+  validateReceiptWithDefaultRegistry,
+} from './domain/chain-registry'
 import { shortHash, type AuditReceipt } from './domain/receipt'
 import { createReceiptAppender } from './domain/receipt-chain'
 import {
@@ -77,6 +82,16 @@ function isSolanaAction(action: AuditReceipt['action']): action is ActionDraft {
   return 'amountSol' in action
 }
 
+function receiptTransactionUrl(receipt: AuditReceipt): string | null {
+  if (!receipt.evidence) return null
+  const transactionId = receipt.evidence.kind === 'x402-payment'
+    ? receipt.evidence.settlement?.transactionHash
+    : receipt.evidence.transactionSignature
+  return transactionId
+    ? defaultChainRegistry.transactionUrl(receipt.evidence.network, transactionId)
+    : null
+}
+
 function App() {
   const [policy, setPolicy] = useState(defaultPolicy)
   const [recipient, setRecipient] = useState('')
@@ -102,7 +117,12 @@ function App() {
   const [notice, setNotice] = useState('Ready to assess an agent action.')
 
   const actionDraft = useMemo<ActionDraft>(
-    () => ({ amountSol: Number(amount), intentNote, recipient }),
+    () => ({
+      amountSol: Number(amount),
+      intentNote,
+      network: NETWORK_IDS.solanaDevnet,
+      recipient,
+    }),
     [amount, intentNote, recipient],
   )
   const currentActionFingerprint = useMemo(() => actionFingerprint(actionDraft), [actionDraft])
@@ -152,7 +172,7 @@ function App() {
 
     let active = true
     setLedgerIntegrity('checking')
-    void verifyReceiptChain(receipts).then((verification) => {
+    void verifyReceiptChain(receipts, [validateReceiptWithDefaultRegistry]).then((verification) => {
       if (active) {
         setLedgerIntegrity(verification.valid ? 'verified' : 'invalid')
       }
@@ -293,7 +313,7 @@ function App() {
         decision: 'ALLOW',
         evidence: {
           kind: 'solana-transfer',
-          network: 'solana:devnet',
+          network: NETWORK_IDS.solanaDevnet,
           transactionSignature: signature,
         },
         reason: 'Submitted after local policy approval.',
@@ -324,7 +344,7 @@ function App() {
 
   async function exportReceipts() {
     const bundle = createReceiptLedgerBundle(receipts)
-    const verification = await verifyReceiptLedgerBundle(bundle)
+    const verification = await verifyReceiptLedgerBundle(bundle, [validateReceiptWithDefaultRegistry])
     if (!verification.valid) {
       setNotice('Export stopped because the local evidence chain did not pass integrity verification.')
       return
@@ -461,6 +481,7 @@ function App() {
             <div className="metric-row"><span>Per-action ceiling</span><strong>{policy.maxAmountSol.toFixed(3)} SOL</strong></div>
             <div className="metric-row"><span>Daily committed</span><strong>{spentTodaySol.toFixed(3)} / {policy.dailyLimitSol.toFixed(3)}</strong></div>
             <div className="metric-row"><span>Memo evidence</span><strong>Required</strong></div>
+            <div className="metric-row"><span>Evidence registry</span><strong>{defaultChainRegistry.listNetworks().length} networks</strong></div>
             <div className="allowlist">
               <span>Approved recipients</span>
               {policy.allowedRecipients.length === 0 ? <p>No recipients approved yet.</p> : policy.allowedRecipients.map((address) => <code key={address}>{compactAddress(address)}</code>)}
@@ -498,7 +519,7 @@ function App() {
                         : `${receipt.action.amount} ${receipt.action.asset} · ${compactAddress(receipt.action.payTo)}`}
                     </p>
                     <code>{shortHash(receipt.hash)}</code>
-                    {receipt.transactionSignature && <a href={`https://explorer.solana.com/tx/${receipt.transactionSignature}?cluster=devnet`} target="_blank" rel="noreferrer">View Devnet transaction <ArrowUpRight size={13} /></a>}
+                    {receiptTransactionUrl(receipt) && <a href={receiptTransactionUrl(receipt) ?? undefined} target="_blank" rel="noreferrer">View transaction <ArrowUpRight size={13} /></a>}
                   </article>
                 ))}
               </div>

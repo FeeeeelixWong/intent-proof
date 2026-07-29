@@ -9,6 +9,7 @@ import {
 const action = {
   amountSol: 0.025,
   intentNote: 'Pay approved devnet invoice',
+  network: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1',
   recipient: 'Recipient111',
 }
 

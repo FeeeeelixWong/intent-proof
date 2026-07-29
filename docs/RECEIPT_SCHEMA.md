@@ -50,6 +50,8 @@ IntentProof stores digests instead of raw payment authorizations. This prevents 
 
 `verifyReceiptLedgerBundle` additionally checks the ledger schema, hash algorithm, receipt count, genesis hash, and tip hash.
 
+Callers may supply receipt validators such as `validateReceiptWithDefaultRegistry`. Adapter validation checks registered networks, address formats, evidence-network binding, transaction identifiers, and explorer compatibility without adding chain-specific branches to the ledger core.
+
 Changing a decision, reason, amount, address, evidence digest, transaction reference, or previous hash invalidates verification.
 
 ## Integration flow

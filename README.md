@@ -8,7 +8,7 @@
 
 IntentProof is a local-first policy evidence layer for AI-agent payments. It records what an agent intended, what policy decided, and what ultimately settled in a portable, independently verifiable receipt chain.
 
-The hosted product is a working Solana Devnet demonstration. The domain layer also includes a protocol-neutral receipt schema and an x402 evidence adapter for the broader AgentPay control plane.
+The hosted product is a working Solana Devnet demonstration. The domain layer also includes a protocol-neutral receipt schema, an x402 evidence adapter, and a chain-adapter registry for the broader AgentPay control plane.
 
 **[Try the demo](https://feeeeelixwong.github.io/intent-proof/)** |
 **[Find an agent-ready task](https://github.com/FeeeeelixWong/intent-proof/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22agent-task%22)** |
@@ -26,6 +26,7 @@ The hosted product is a working Solana Devnet demonstration. The domain layer al
 - Produces versioned, canonical SHA-256 receipts for allowed, blocked, submitted, failed, or settled events.
 - Verifies every receipt hash and link before exporting a portable `intentproof.receipt-ledger.v1` bundle.
 - Creates x402 evidence from `PAYMENT-REQUIRED`, payment payload, facilitator, and settlement artifacts without storing the raw authorization payload.
+- Resolves network validation and explorer links through pluggable namespace adapters instead of hard-coded chain branches.
 
 IntentProof never receives a seed phrase or private key. Wallet signing remains inside the user's Phantom extension.
 
@@ -36,10 +37,22 @@ IntentProof never receives a seed phrase or private key. Wallet signing remains 
 | Policy engine | Supplies the decision and reason recorded in a receipt |
 | Wallet | Retains keys and signs the approved action |
 | Facilitator | Verifies and settles an x402 payment |
+| Chain Registry | Validates network, address, and transaction identifiers through adapters |
 | IntentProof | Binds intent, policy, payment digests, settlement reference, and the previous receipt hash |
 | Unified Console | Imports and presents verified ledger bundles |
 
 IntentProof does not route payments, custody assets, or act as a facilitator.
+
+## Network support
+
+| Support level | Networks |
+| --- | --- |
+| End-to-end wallet execution | Solana Devnet |
+| Built-in evidence validation | X Layer Mainnet, Base Mainnet, Base Sepolia, Solana Mainnet, Solana Devnet |
+| Fast expansion | Any EVM network through one network manifest |
+| New chain family | One namespace adapter plus one network manifest |
+
+Evidence validation means IntentProof can validate and link a normalized settlement receipt. It does not mean the IntentProof demo can initiate a payment on that network.
 
 ## Part of an Agent Trust Stack
 
@@ -102,6 +115,9 @@ Settlement evidence
 Serialized receipt appender
     |
     v
+Chain adapter validation
+    |
+    v
 Verified ledger bundle ---------> Unified Console
 ```
 
@@ -137,6 +153,25 @@ const evidence = await createX402PaymentEvidence({
 ```
 
 See [`docs/RECEIPT_SCHEMA.md`](docs/RECEIPT_SCHEMA.md) for the complete schema, verification rules, and Router/Console integration contract.
+
+## Add a network
+
+An additional EVM chain reuses the built-in `eip155` adapter:
+
+```ts
+import { ChainRegistry, evmChainAdapter } from './src/domain'
+
+const registry = new ChainRegistry()
+  .registerAdapter(evmChainAdapter)
+  .registerNetwork({
+    displayName: 'Example EVM',
+    environment: 'testnet',
+    explorerTransactionUrl: 'https://explorer.example/tx/{tx}',
+    id: 'eip155:999999',
+  })
+```
+
+A new chain family uses `createPatternChainAdapter`; receipt hashing, ledger export, and UI code remain unchanged. See [`docs/CHAIN_ADAPTERS.md`](docs/CHAIN_ADAPTERS.md) for the complete extension contract.
 
 ## Grant fit
 

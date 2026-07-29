@@ -21,6 +21,7 @@ export type ReceiptLedgerBundle = {
 
 export type ReceiptChainIssue = {
   code:
+    | 'adapter_validation_failed'
     | 'duplicate_hash'
     | 'duplicate_id'
     | 'hash_mismatch'
@@ -39,7 +40,12 @@ export type ReceiptChainVerification = {
   valid: boolean
 }
 
-export async function verifyReceiptChain(receipts: readonly AuditReceipt[]): Promise<ReceiptChainVerification> {
+export type ReceiptValidator = (receipt: AuditReceipt) => readonly string[]
+
+export async function verifyReceiptChain(
+  receipts: readonly AuditReceipt[],
+  validators: readonly ReceiptValidator[] = [],
+): Promise<ReceiptChainVerification> {
   const issues: ReceiptChainIssue[] = []
   const seenHashes = new Set<string>()
   const seenIds = new Set<string>()
@@ -67,6 +73,15 @@ export async function verifyReceiptChain(receipts: readonly AuditReceipt[]): Pro
         code: 'invalid_evidence_binding',
         index,
         message: `Receipt ${index} contains evidence that does not match its action or status.`,
+      })
+    }
+
+    const pluginIssues = validators.flatMap((validator) => [...validator(receipt)])
+    if (pluginIssues.length > 0) {
+      issues.push({
+        code: 'adapter_validation_failed',
+        index,
+        message: pluginIssues.join(' '),
       })
     }
 
@@ -124,8 +139,11 @@ export function createReceiptLedgerBundle(
   }
 }
 
-export async function verifyReceiptLedgerBundle(bundle: ReceiptLedgerBundle): Promise<ReceiptChainVerification> {
-  const verification = await verifyReceiptChain(bundle.receipts)
+export async function verifyReceiptLedgerBundle(
+  bundle: ReceiptLedgerBundle,
+  validators: readonly ReceiptValidator[] = [],
+): Promise<ReceiptChainVerification> {
+  const verification = await verifyReceiptChain(bundle.receipts, validators)
   const metadataMatches = bundle.schema === RECEIPT_LEDGER_SCHEMA
     && bundle.chain.algorithm === 'SHA-256'
     && bundle.chain.receiptCount === bundle.receipts.length

@@ -107,6 +107,9 @@ export function receiptBindingIssues(
   }
 
   if (!isX402PaymentAction(receipt.action) && receipt.evidence.kind === 'solana-transfer') {
+    if (receipt.action.network !== receipt.evidence.network) {
+      issues.push('The Solana action network does not match its evidence.')
+    }
     if (
       receipt.transactionSignature
       && receipt.transactionSignature !== receipt.evidence.transactionSignature
