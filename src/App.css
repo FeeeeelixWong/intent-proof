@@ -17,6 +17,7 @@
 .surface-heading > div,
 .surface-footer,
 .side-heading,
+.ledger-heading-actions,
 .ledger-actions,
 .receipt-top,
 .notice,
@@ -159,7 +160,18 @@ textarea { line-height: 1.45; resize: vertical; }
 .allowlist p { margin: 0; }
 .allowlist code { background: var(--stone); border-radius: 4px; color: var(--ink); font-family: var(--mono); font-size: 12px; padding: 7px 8px; }
 .ledger-surface { min-height: 340px; }
+.ledger-heading-actions { gap: 8px; }
 .ledger-actions { gap: 6px; }
+.integrity-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 760;
+  padding: 4px 7px;
+}
+.integrity-chip.verified { background: var(--green-wash); border-color: #b7dcca; color: var(--green); }
+.integrity-chip.invalid { background: var(--red-wash); border-color: #efc1b9; color: var(--red); }
 .ledger-empty { border: 1px dashed #cbd4ce; color: var(--muted); font-size: 13px; line-height: 1.55; padding: 15px; }
 .ledger-list { display: grid; gap: 10px; }
 .receipt { background: var(--stone); border-left: 3px solid var(--green); padding: 11px; }

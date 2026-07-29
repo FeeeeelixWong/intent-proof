@@ -6,7 +6,9 @@
 [![Good first issues](https://img.shields.io/github/issues/FeeeeelixWong/intent-proof/good%20first%20issue?label=good%20first%20issues)](https://github.com/FeeeeelixWong/intent-proof/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22good%20first%20issue%22)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-IntentProof is a local-first guardrail and evidence ledger for AI agents that prepare Solana transfers. It gives a human operator a clear policy decision before their wallet is asked to sign anything.
+IntentProof is a local-first policy evidence layer for AI-agent payments. It records what an agent intended, what policy decided, and what ultimately settled in a portable, independently verifiable receipt chain.
+
+The hosted product is a working Solana Devnet demonstration. The domain layer also includes a protocol-neutral receipt schema and an x402 evidence adapter for the broader AgentPay control plane.
 
 **[Try the demo](https://feeeeelixwong.github.io/intent-proof/)** |
 **[Find an agent-ready task](https://github.com/FeeeeelixWong/intent-proof/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22agent-task%22)** |
@@ -20,9 +22,24 @@ IntentProof is a local-first guardrail and evidence ledger for AI agents that pr
 - Binds each approval to the exact recipient, amount, and intent note that was assessed; editing any of them requires another policy decision.
 - Builds and signs a real **Solana Devnet** transfer only after the local policy allows it and the operator confirms it in Phantom.
 - Adds the declared intent as an on-chain Memo instruction.
-- Produces an exportable SHA-256-linked receipt for every allowed or blocked decision in the current browser session.
+- Serializes concurrent receipt creation so every event links to one committed predecessor.
+- Produces versioned, canonical SHA-256 receipts for allowed, blocked, submitted, failed, or settled events.
+- Verifies every receipt hash and link before exporting a portable `intentproof.receipt-ledger.v1` bundle.
+- Creates x402 evidence from `PAYMENT-REQUIRED`, payment payload, facilitator, and settlement artifacts without storing the raw authorization payload.
 
 IntentProof never receives a seed phrase or private key. Wallet signing remains inside the user's Phantom extension.
+
+## Product boundary
+
+| Layer | IntentProof responsibility |
+| --- | --- |
+| Policy engine | Supplies the decision and reason recorded in a receipt |
+| Wallet | Retains keys and signs the approved action |
+| Facilitator | Verifies and settles an x402 payment |
+| IntentProof | Binds intent, policy, payment digests, settlement reference, and the previous receipt hash |
+| Unified Console | Imports and presents verified ledger bundles |
+
+IntentProof does not route payments, custody assets, or act as a facilitator.
 
 ## Part of an Agent Trust Stack
 
@@ -66,15 +83,64 @@ npm run build
 
 ## Architecture
 
-1. The operator enters an agent identity, recipient, amount, and intent note.
-2. The local policy engine blocks or allows the action before a wallet connection is needed.
-3. A receipt is recorded locally with the previous receipt hash.
-4. For allowed actions, Phantom signs a `SystemProgram.transfer` plus a Memo instruction on Solana Devnet.
-5. The confirmed transaction signature is appended to a submitted receipt and can be opened in Solana Explorer.
+```text
+Agent intent
+    |
+    v
+Policy decision ---------> blocked receipt
+    |
+    v
+Wallet authorization
+    |
+    v
+Chain or x402 facilitator
+    |
+    v
+Settlement evidence
+    |
+    v
+Serialized receipt appender
+    |
+    v
+Verified ledger bundle ---------> Unified Console
+```
+
+The current browser demo follows the Solana path: Phantom signs a `SystemProgram.transfer` plus a Memo instruction on Devnet. The reusable domain layer follows the same receipt flow for x402 payments.
+
+## x402 integration
+
+`createX402PaymentEvidence` hashes payment artifacts using canonical JSON. Raw payment authorizations are not copied into the receipt:
+
+```ts
+import {
+  createReceipt,
+  createX402PaymentEvidence,
+  verifyReceiptChain,
+} from './src/domain'
+
+const evidence = await createX402PaymentEvidence({
+  amount: '10000',
+  asset: '0xUSDC',
+  network: 'eip155:8453',
+  payTo: '0xMerchant',
+  paymentPayload,
+  paymentRequired,
+  protocolVersion: 2,
+  resource: 'https://api.example.com/report',
+  scheme: 'exact',
+  settlement: {
+    response: settlementResponse,
+    success: true,
+    transactionHash: '0x...',
+  },
+})
+```
+
+See [`docs/RECEIPT_SCHEMA.md`](docs/RECEIPT_SCHEMA.md) for the complete schema, verification rules, and Router/Console integration contract.
 
 ## Grant fit
 
-This project is a working Solana product for the Superteam Agentic Engineering Grant. It demonstrates an agent-native pattern: agents can propose actions, while users retain custody and receive a verifiable, human-readable trail of every decision and transaction.
+This project began as a working Solana product for the Superteam Agentic Engineering Grant. It now preserves that delivery while evolving the receipt core into reusable infrastructure for agent-payment policy, x402 settlement, and audit products.
 
 ## License
 

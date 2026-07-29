@@ -34,6 +34,11 @@ import {
 } from './domain/phantom'
 import { shortHash, type AuditReceipt } from './domain/receipt'
 import { createReceiptAppender } from './domain/receipt-chain'
+import {
+  createReceiptLedgerBundle,
+  verifyReceiptChain,
+  verifyReceiptLedgerBundle,
+} from './domain/receipt-ledger'
 import './App.css'
 
 declare global {
@@ -62,8 +67,14 @@ function compactAddress(value: string): string {
 
 function statusLabel(status: AuditReceipt['status']): string {
   if (status === 'submitted') return 'Submitted on Devnet'
+  if (status === 'settled') return 'Settled'
   if (status === 'approved') return 'Approved locally'
+  if (status === 'failed') return 'Settlement failed'
   return 'Blocked locally'
+}
+
+function isSolanaAction(action: AuditReceipt['action']): action is ActionDraft {
+  return 'amountSol' in action
 }
 
 function App() {
@@ -84,8 +95,10 @@ function App() {
     })
   }
   const appendReceipt = receiptAppenderRef.current
+  const isAssessingRef = useRef(false)
   const [isAssessing, setIsAssessing] = useState(false)
   const [isSending, setIsSending] = useState(false)
+  const [ledgerIntegrity, setLedgerIntegrity] = useState<'empty' | 'checking' | 'invalid' | 'verified'>('empty')
   const [notice, setNotice] = useState('Ready to assess an agent action.')
 
   const actionDraft = useMemo<ActionDraft>(
@@ -97,7 +110,9 @@ function App() {
     && assessedActionFingerprint === currentActionFingerprint
     && approvedActionFingerprintRef.current === currentActionFingerprint
   const spentTodaySol = useMemo(
-    () => receipts.filter((receipt) => receipt.status === 'submitted').reduce((sum, receipt) => sum + receipt.action.amountSol, 0),
+    () => receipts
+      .filter((receipt) => receipt.status === 'submitted' && isSolanaAction(receipt.action))
+      .reduce((sum, receipt) => sum + (isSolanaAction(receipt.action) ? receipt.action.amountSol : 0), 0),
     [receipts],
   )
   useEffect(() => {
@@ -128,6 +143,24 @@ function App() {
       mounted = false
     }
   }, [])
+
+  useEffect(() => {
+    if (receipts.length === 0) {
+      setLedgerIntegrity('empty')
+      return
+    }
+
+    let active = true
+    setLedgerIntegrity('checking')
+    void verifyReceiptChain(receipts).then((verification) => {
+      if (active) {
+        setLedgerIntegrity(verification.valid ? 'verified' : 'invalid')
+      }
+    })
+    return () => {
+      active = false
+    }
+  }, [receipts])
 
   function invalidateApproval() {
     const hadApproval = approvedActionFingerprintRef.current !== null
@@ -174,7 +207,8 @@ function App() {
   }
 
   async function assessAction() {
-    if (isAssessing) return
+    if (isAssessingRef.current) return
+    isAssessingRef.current = true
     setIsAssessing(true)
     try {
       const assessedAction = { ...actionDraft }
@@ -186,6 +220,7 @@ function App() {
       await recordDecision(nextDecision, nextDecision.decision === 'ALLOW' ? 'approved' : 'blocked', assessedAction)
       setNotice(nextDecision.decision === 'ALLOW' ? 'Agent action is approved locally. Connect a Devnet wallet to submit.' : `Action blocked: ${nextDecision.reason}.`)
     } finally {
+      isAssessingRef.current = false
       setIsAssessing(false)
     }
   }
@@ -256,6 +291,11 @@ function App() {
         action: actionDraft,
         agentId,
         decision: 'ALLOW',
+        evidence: {
+          kind: 'solana-transfer',
+          network: 'solana:devnet',
+          transactionSignature: signature,
+        },
         reason: 'Submitted after local policy approval.',
         status: 'submitted',
         transactionSignature: signature,
@@ -282,15 +322,22 @@ function App() {
     setNotice('Latest receipt copied as JSON.')
   }
 
-  function exportReceipts() {
-    const blob = new Blob([JSON.stringify(receipts, null, 2)], { type: 'application/json' })
+  async function exportReceipts() {
+    const bundle = createReceiptLedgerBundle(receipts)
+    const verification = await verifyReceiptLedgerBundle(bundle)
+    if (!verification.valid) {
+      setNotice('Export stopped because the local evidence chain did not pass integrity verification.')
+      return
+    }
+
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = 'intent-proof-receipts.json'
+    link.download = 'intent-proof-ledger.json'
     link.click()
     URL.revokeObjectURL(url)
-    setNotice('Receipt ledger exported as JSON.')
+    setNotice(`Verified ledger exported with ${verification.receiptCount} receipt${verification.receiptCount === 1 ? '' : 's'}.`)
   }
 
   function loadBlockedExample() {
@@ -421,7 +468,23 @@ function App() {
           </section>
 
           <section className="side-surface ledger-surface">
-            <div className="side-heading"><div><h2>Evidence chain</h2><p>{receipts.length} local receipt{receipts.length === 1 ? '' : 's'}</p></div><div className="ledger-actions"><button className="icon-button small" type="button" title="Copy latest receipt JSON" onClick={() => void copyLatestReceipt()}><Copy size={15} /></button><button className="icon-button small" type="button" title="Export all receipt JSON" onClick={exportReceipts}><Download size={15} /></button></div></div>
+            <div className="side-heading">
+              <div>
+                <h2>Evidence chain</h2>
+                <p>{receipts.length} local receipt{receipts.length === 1 ? '' : 's'}</p>
+              </div>
+              <div className="ledger-heading-actions">
+                {ledgerIntegrity !== 'empty' && (
+                  <span className={`integrity-chip ${ledgerIntegrity}`}>
+                    {ledgerIntegrity === 'checking' ? 'Checking' : ledgerIntegrity === 'verified' ? 'Verified' : 'Invalid'}
+                  </span>
+                )}
+                <div className="ledger-actions">
+                  <button className="icon-button small" type="button" title="Copy latest receipt JSON" onClick={() => void copyLatestReceipt()}><Copy size={15} /></button>
+                  <button className="icon-button small" type="button" disabled={receipts.length === 0 || ledgerIntegrity === 'invalid'} title="Export verified evidence bundle" onClick={() => void exportReceipts()}><Download size={15} /></button>
+                </div>
+              </div>
+            </div>
             {receipts.length === 0 ? (
               <div className="ledger-empty">No decisions recorded. Each assessment creates a hash-linked receipt in this browser session.</div>
             ) : (
@@ -429,7 +492,11 @@ function App() {
                 {[...receipts].reverse().map((receipt) => (
                   <article className="receipt" key={receipt.id}>
                     <div className="receipt-top"><span className={`receipt-status ${receipt.status}`}>{statusLabel(receipt.status)}</span><time>{new Date(receipt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time></div>
-                    <p>{receipt.action.amountSol.toFixed(3)} SOL · {compactAddress(receipt.action.recipient || 'No recipient')}</p>
+                    <p>
+                      {isSolanaAction(receipt.action)
+                        ? `${receipt.action.amountSol.toFixed(3)} SOL · ${compactAddress(receipt.action.recipient || 'No recipient')}`
+                        : `${receipt.action.amount} ${receipt.action.asset} · ${compactAddress(receipt.action.payTo)}`}
+                    </p>
                     <code>{shortHash(receipt.hash)}</code>
                     {receipt.transactionSignature && <a href={`https://explorer.solana.com/tx/${receipt.transactionSignature}?cluster=devnet`} target="_blank" rel="noreferrer">View Devnet transaction <ArrowUpRight size={13} /></a>}
                   </article>

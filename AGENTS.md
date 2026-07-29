@@ -4,12 +4,16 @@ This file gives coding agents the minimum context needed to contribute safely to
 
 ## Project goal
 
-IntentProof is a local-first Solana transaction policy firewall and tamper-evident receipt ledger. It evaluates an AI agent's proposed transfer before Phantom is asked to sign. The browser app never receives a seed phrase or private key.
+IntentProof is a local-first policy evidence layer for AI-agent payments. The hosted demo evaluates a Solana transfer before Phantom is asked to sign, while the domain layer produces protocol-neutral receipt bundles for Solana and x402 settlement evidence. The browser app never receives a seed phrase or private key.
 
 ## Project map
 
 - `src/domain/policy.ts`: deterministic policy evaluation and action fingerprints.
-- `src/domain/receipt.ts`: receipt creation and SHA-256 hash links.
+- `src/domain/receipt.ts`: versioned receipt types and canonical SHA-256 hashing.
+- `src/domain/receipt-chain.ts`: serialized receipt append queue.
+- `src/domain/receipt-ledger.ts`: chain and exported-bundle verification.
+- `src/domain/x402-evidence.ts`: privacy-preserving x402 artifact digests.
+- `src/domain/index.ts`: reusable public domain exports.
 - `src/domain/phantom.ts`: narrow Phantom provider adapter.
 - `src/App.tsx`: product workflow and Devnet transaction construction.
 - `src/domain/*.test.ts`: domain tests.
@@ -33,7 +37,9 @@ Run all three validation commands before opening a pull request.
 3. An approval is valid only for the exact recipient, amount, and intent note that were assessed.
 4. A failed or cancelled transaction must never be marked as submitted.
 5. Policy and receipt logic must remain deterministic and independently testable.
-6. Do not add analytics, remote persistence, or production-mainnet behavior without an explicit issue.
+6. A receipt appender must link against the latest successfully committed receipt.
+7. Raw x402 authorization payloads must not be persisted in evidence receipts.
+8. Do not add analytics, remote persistence, or production-mainnet behavior without an explicit issue.
 
 ## Contribution workflow
 
