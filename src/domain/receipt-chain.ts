@@ -1,10 +1,14 @@
-import { createReceipt, type AuditReceipt } from './receipt'
+import {
+  createReceipt,
+  type AuditReceipt,
+  type AuditReceiptInput,
+} from './receipt'
 
-type ReceiptInput = Omit<AuditReceipt, 'hash' | 'id' | 'previousHash' | 'timestamp'>
+type ReceiptInput = Omit<AuditReceiptInput, 'previousHash'>
 type ReceiptFactory = typeof createReceipt
 
 export function createReceiptAppender(
-  onAppend: (receipt: AuditReceipt) => void,
+  onAppend: (receipt: AuditReceipt) => Promise<void> | void,
   factory: ReceiptFactory = createReceipt,
 ) {
   let tip: AuditReceipt | null = null
@@ -16,8 +20,8 @@ export function createReceiptAppender(
         ...input,
         previousHash: tip?.hash ?? null,
       })
+      await onAppend(receipt)
       tip = receipt
-      onAppend(receipt)
       return receipt
     })
 
