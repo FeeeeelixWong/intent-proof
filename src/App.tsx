@@ -32,7 +32,8 @@ import {
   signAndSendWithPhantom,
   type SolanaWalletProvider,
 } from './domain/phantom'
-import { createReceipt, shortHash, type AuditReceipt } from './domain/receipt'
+import { shortHash, type AuditReceipt } from './domain/receipt'
+import { createReceiptAppender } from './domain/receipt-chain'
 import './App.css'
 
 declare global {
@@ -76,6 +77,14 @@ function App() {
   const [assessedActionFingerprint, setAssessedActionFingerprint] = useState<string | null>(null)
   const approvedActionFingerprintRef = useRef<string | null>(null)
   const [receipts, setReceipts] = useState<AuditReceipt[]>([])
+  const receiptAppenderRef = useRef<ReturnType<typeof createReceiptAppender> | null>(null)
+  if (!receiptAppenderRef.current) {
+    receiptAppenderRef.current = createReceiptAppender((receipt) => {
+      setReceipts((current) => [...current, receipt])
+    })
+  }
+  const appendReceipt = receiptAppenderRef.current
+  const [isAssessing, setIsAssessing] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [notice, setNotice] = useState('Ready to assess an agent action.')
 
@@ -155,27 +164,30 @@ function App() {
     status: AuditReceipt['status'],
     action: ActionDraft = actionDraft,
   ) {
-    const receipt = await createReceipt({
+    return appendReceipt({
       action,
       agentId,
       decision: nextDecision.decision,
-      previousHash: receipts.at(-1)?.hash ?? null,
       reason: nextDecision.reason,
       status,
     })
-    setReceipts((current) => [...current, receipt])
-    return receipt
   }
 
   async function assessAction() {
-    const assessedAction = { ...actionDraft }
-    const nextDecision = evaluateAction(assessedAction, policy, spentTodaySol)
-    const fingerprint = actionFingerprint(assessedAction)
-    setDecision(nextDecision)
-    setAssessedActionFingerprint(fingerprint)
-    approvedActionFingerprintRef.current = nextDecision.decision === 'ALLOW' ? fingerprint : null
-    await recordDecision(nextDecision, nextDecision.decision === 'ALLOW' ? 'approved' : 'blocked', assessedAction)
-    setNotice(nextDecision.decision === 'ALLOW' ? 'Agent action is approved locally. Connect a Devnet wallet to submit.' : `Action blocked: ${nextDecision.reason}.`)
+    if (isAssessing) return
+    setIsAssessing(true)
+    try {
+      const assessedAction = { ...actionDraft }
+      const nextDecision = evaluateAction(assessedAction, policy, spentTodaySol)
+      const fingerprint = actionFingerprint(assessedAction)
+      setDecision(nextDecision)
+      setAssessedActionFingerprint(fingerprint)
+      approvedActionFingerprintRef.current = nextDecision.decision === 'ALLOW' ? fingerprint : null
+      await recordDecision(nextDecision, nextDecision.decision === 'ALLOW' ? 'approved' : 'blocked', assessedAction)
+      setNotice(nextDecision.decision === 'ALLOW' ? 'Agent action is approved locally. Connect a Devnet wallet to submit.' : `Action blocked: ${nextDecision.reason}.`)
+    } finally {
+      setIsAssessing(false)
+    }
   }
 
   async function connectWallet() {
@@ -240,16 +252,14 @@ function App() {
 
       const { signature } = await signAndSendWithPhantom(provider, transaction)
       await connection.confirmTransaction({ ...latest, signature }, 'confirmed')
-      const receipt = await createReceipt({
+      await appendReceipt({
         action: actionDraft,
         agentId,
         decision: 'ALLOW',
-        previousHash: receipts.at(-1)?.hash ?? null,
         reason: 'Submitted after local policy approval.',
         status: 'submitted',
         transactionSignature: signature,
       })
-      setReceipts((current) => [...current, receipt])
       setDecision(null)
       setAssessedActionFingerprint(null)
       approvedActionFingerprintRef.current = null
@@ -359,8 +369,9 @@ function App() {
 
             <div className="surface-footer">
               <div className="notice"><TerminalSquare size={16} />{notice}</div>
-              <button className="button primary" type="button" onClick={() => void assessAction()}>
-                <ShieldCheck size={17} /> Assess action
+              <button className="button primary" type="button" disabled={isAssessing} onClick={() => void assessAction()}>
+                {isAssessing ? <LoaderCircle className="spin" size={17} /> : <ShieldCheck size={17} />}
+                {isAssessing ? 'Assessing...' : 'Assess action'}
               </button>
             </div>
           </section>
