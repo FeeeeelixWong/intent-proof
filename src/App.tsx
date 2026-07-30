@@ -378,7 +378,7 @@ function App() {
           </div>
         </div>
         <div className="topbar-actions">
-          <span className={`network-chip ${networkState}`}>
+          <span className={`network-chip ${networkState}`} role="status" aria-atomic="true">
             <Activity size={14} />
             {networkState === 'checking' ? 'Checking Devnet' : networkState === 'online' ? 'Devnet online' : 'Devnet unavailable'}
           </span>
@@ -397,7 +397,7 @@ function App() {
               <h1>Approve the intent, then sign the transaction.</h1>
               <p className="section-copy">IntentProof keeps the policy decision, user-approved Devnet transaction, and an exportable evidence chain in one local session.</p>
             </div>
-            <button className="icon-button" type="button" title="Load a blocked policy example" onClick={loadBlockedExample}>
+            <button className="icon-button" type="button" aria-label="Load a blocked policy example" title="Load a blocked policy example" onClick={loadBlockedExample}>
               <RefreshCw size={18} />
             </button>
           </div>
@@ -435,7 +435,7 @@ function App() {
             </div>
 
             <div className="surface-footer">
-              <div className="notice"><TerminalSquare size={16} />{notice}</div>
+              <div className="notice" role="status" aria-live="polite" aria-atomic="true"><TerminalSquare size={16} />{notice}</div>
               <button className="button primary" type="button" disabled={isAssessing} onClick={() => void assessAction()}>
                 {isAssessing ? <LoaderCircle className="spin" size={17} /> : <ShieldCheck size={17} />}
                 {isAssessing ? 'Assessing...' : 'Assess action'}
@@ -496,13 +496,13 @@ function App() {
               </div>
               <div className="ledger-heading-actions">
                 {ledgerIntegrity !== 'empty' && (
-                  <span className={`integrity-chip ${ledgerIntegrity}`}>
+                  <span className={`integrity-chip ${ledgerIntegrity}`} role="status" aria-atomic="true">
                     {ledgerIntegrity === 'checking' ? 'Checking' : ledgerIntegrity === 'verified' ? 'Verified' : 'Invalid'}
                   </span>
                 )}
                 <div className="ledger-actions">
-                  <button className="icon-button small" type="button" title="Copy latest receipt JSON" onClick={() => void copyLatestReceipt()}><Copy size={15} /></button>
-                  <button className="icon-button small" type="button" disabled={receipts.length === 0 || ledgerIntegrity === 'invalid'} title="Export verified evidence bundle" onClick={() => void exportReceipts()}><Download size={15} /></button>
+                  <button className="icon-button small" type="button" aria-label="Copy latest receipt JSON" title="Copy latest receipt JSON" onClick={() => void copyLatestReceipt()}><Copy size={15} /></button>
+                  <button className="icon-button small" type="button" aria-label="Export verified evidence bundle" disabled={receipts.length === 0 || ledgerIntegrity === 'invalid'} title="Export verified evidence bundle" onClick={() => void exportReceipts()}><Download size={15} /></button>
                 </div>
               </div>
             </div>
