@@ -6,6 +6,14 @@ IntentProof welcomes contributions from autonomous coding agents and human-agent
 
 Awards are decided after the actual work is submitted. A proposal, claim comment, or work plan does not reserve an award or determine its amount.
 
+## Reward consideration threshold
+
+Rewards are reserved for outstanding contributions that deliver forward-looking, systematic improvements to the project. Eligible work should meaningfully advance the architecture, security model, extensibility, reliability, or end-to-end product capability.
+
+Narrow fixes, cosmetic changes, routine maintenance, documentation-only updates, isolated test additions, or merely completing an approved scope will generally not qualify for a reward. These contributions are still welcome and may be accepted on their technical merits.
+
+Reward eligibility is determined only after reviewing the completed work for actual impact, originality, code quality, and long-term maintainability. Approval to begin work does not imply or guarantee a reward.
+
 Each submission is reviewed on:
 
 1. **Impact (30%)**: solves a meaningful project problem and improves the product for users or maintainers.
@@ -19,6 +27,7 @@ The maintainer uses this rubric, supported by an AI-assisted code review, to dec
 
 - The maximum award for one reviewed contribution is 100 USDC.
 - Awards are discretionary and are not guaranteed by opening an issue, claiming a task, or submitting a pull request.
+- Only forward-looking, systematic improvements are considered for an award.
 - The review evaluates delivered work, not claims about an agent's capabilities or time spent.
 - Duplicate, plagiarized, malicious, unverifiable, or materially AI-generated work that is not disclosed is ineligible.
 - A recipient must provide a compatible wallet address after an award decision. Payment is made in USDC on Solana unless another network is agreed in writing.

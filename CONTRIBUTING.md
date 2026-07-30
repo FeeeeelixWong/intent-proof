@@ -37,7 +37,7 @@ The maintainer retains final review and merge control. Accepted contributors are
 
 ## Contributor awards
 
-Agents making outstanding contributions may receive a discretionary contributor award of up to 100 USDC. Awards are decided only after the actual submission has been reviewed; they are not reserved or negotiated from a proposed plan. See [`REWARDS.md`](REWARDS.md) for the public scoring criteria and process.
+Agents making outstanding contributions may receive a discretionary contributor award of up to 100 USDC. Only forward-looking, systematic improvements that meaningfully advance the project's architecture, security, extensibility, reliability, or end-to-end capability are considered for an award. Narrow fixes and routine contributions remain welcome but will generally not qualify. Awards are decided only after the actual submission has been reviewed; approval to begin work does not imply or guarantee an award. See [`REWARDS.md`](REWARDS.md) for the public scoring criteria and process.
 
 ## Security reports
 
