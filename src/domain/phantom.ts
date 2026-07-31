@@ -43,6 +43,15 @@ function wasTransactionRejected(error: unknown): boolean {
   return code === 4001 || /reject|cancel/i.test(describeProviderError(error))
 }
 
+// Only retry through the legacy request API when Phantom explicitly says the
+// convenience method is unavailable. Any other failure may happen after the
+// transaction was already broadcast, so a second sign-and-send route would
+// violate the at-most-once submission boundary.
+function wasSignAndSendMethodUnsupported(error: unknown): boolean {
+  const code = typeof error === 'object' && error !== null ? (error as { code?: unknown }).code : undefined
+  return code === -32601
+}
+
 export async function signAndSendWithPhantom(
   provider: SolanaWalletProvider,
   transaction: { serializeMessage: () => Uint8Array },
@@ -50,10 +59,14 @@ export async function signAndSendWithPhantom(
   try {
     return await provider.signAndSendTransaction(transaction)
   } catch (primaryError) {
-    if (!provider.request || wasTransactionRejected(primaryError)) throw primaryError
+    if (
+      !provider.request
+      || wasTransactionRejected(primaryError)
+      || !wasSignAndSendMethodUnsupported(primaryError)
+    ) throw primaryError
 
-    // The legacy request path is documented by Phantom and helps extensions
-    // where the convenience method fails without presenting a confirmation UI.
+    // The legacy request path is safe to try only after an explicit
+    // "method unavailable" response, which proves no convenience call ran.
     return provider.request({
       method: 'signAndSendTransaction',
       params: { message: bs58.encode(transaction.serializeMessage()) },
