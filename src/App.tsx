@@ -44,6 +44,7 @@ import {
   verifyReceiptChain,
   verifyReceiptLedgerBundle,
 } from './domain/receipt-ledger'
+import { assertTransactionConfirmed } from './domain/solana-confirmation'
 import './App.css'
 
 declare global {
@@ -306,7 +307,8 @@ function App() {
       transaction.recentBlockhash = latest.blockhash
 
       const { signature } = await signAndSendWithPhantom(provider, transaction)
-      await connection.confirmTransaction({ ...latest, signature }, 'confirmed')
+      const confirmation = await connection.confirmTransaction({ ...latest, signature }, 'confirmed')
+      assertTransactionConfirmed(confirmation)
       await appendReceipt({
         action: actionDraft,
         agentId,
