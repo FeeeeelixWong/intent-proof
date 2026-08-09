@@ -30,6 +30,8 @@ The hosted product is a working Solana Devnet demonstration. The domain layer al
 
 IntentProof never receives a seed phrase or private key. Wallet signing remains inside the user's Phantom extension.
 
+The optional TaskMarket panel makes one read-only request to the public TaskMarket API to discover open USDC-funded work. It can prepare a local hand-off link for review, but it never creates, funds, claims, or signs a task. TaskMarket wallet authorization remains an explicit user-controlled step outside the discovery panel.
+
 ## Product boundary
 
 | Layer | IntentProof responsibility |

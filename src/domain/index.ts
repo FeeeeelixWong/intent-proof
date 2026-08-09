@@ -34,6 +34,21 @@ export {
 } from './receipt'
 export { createReceiptAppender } from './receipt-chain'
 export {
+  createTaskMarketClient,
+  formatTaskMarketUsdc,
+  prepareTaskMarketDelegation,
+  taskMarketUrl,
+  TASKMARKET_API_BASE_URL,
+  TASKMARKET_BASE_NETWORK,
+  TASKMARKET_USDC_ASSET,
+  TASKMARKET_WEB_BASE_URL,
+  TaskMarketApiError,
+  type TaskMarketDelegationDraft,
+  type TaskMarketListOptions,
+  type TaskMarketTask,
+  type TaskMarketTaskMode,
+} from './taskmarket'
+export {
   RECEIPT_LEDGER_SCHEMA,
   createReceiptLedgerBundle,
   verifyReceiptChain,

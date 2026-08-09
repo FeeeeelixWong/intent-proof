@@ -152,6 +152,27 @@ textarea { line-height: 1.45; resize: vertical; }
 .policy-summary { color: var(--muted); font-size: 12px; }
 .policy-summary strong { color: var(--ink); }
 
+.taskmarket-surface { border-top: 3px solid var(--green); }
+.taskmarket-copy { color: var(--muted); font-size: 13px; line-height: 1.55; margin: -8px 0 18px; max-width: 780px; }
+.taskmarket-controls { align-items: center; border-top: 1px solid var(--line); display: flex; gap: 16px; justify-content: space-between; padding-top: 16px; }
+.taskmarket-note { align-items: center; color: var(--muted); display: inline-flex; font-size: 12px; gap: 7px; }
+.taskmarket-empty { border: 1px dashed #cbd4ce; color: var(--muted); font-size: 13px; line-height: 1.55; margin-top: 16px; padding: 14px; }
+.taskmarket-error { align-items: center; background: var(--red-wash); border: 1px solid #efc1b9; color: var(--red); display: flex; font-size: 12px; gap: 7px; line-height: 1.45; margin-top: 16px; padding: 11px 12px; }
+.taskmarket-list { display: grid; gap: 10px; margin-top: 16px; }
+.taskmarket-card { background: var(--stone); border-left: 3px solid var(--green); padding: 13px; }
+.taskmarket-card-top { align-items: center; display: flex; justify-content: space-between; gap: 12px; }
+.taskmarket-reward { color: var(--green); font-family: var(--mono); font-size: 12px; font-weight: 760; }
+.taskmarket-meta { color: var(--muted); font-size: 11px; }
+.taskmarket-card h3 { color: var(--ink); font-size: 13px; line-height: 1.4; margin: 9px 0 5px; }
+.taskmarket-card p { color: var(--muted); font-size: 11px; margin: 0; }
+.taskmarket-card-actions { align-items: center; display: flex; gap: 14px; margin-top: 12px; }
+.taskmarket-card-actions a { align-items: center; color: var(--green); display: inline-flex; font-size: 12px; font-weight: 720; gap: 4px; text-decoration: none; }
+.taskmarket-card-actions a:hover { text-decoration: underline; }
+.taskmarket-prepare { border-radius: 4px; font-size: 11px; min-height: 30px; padding: 0 9px; }
+.taskmarket-prepared { background: var(--green-wash); border: 1px solid #b7dcca; color: var(--green); font-size: 12px; line-height: 1.5; margin-top: 16px; padding: 12px; }
+.taskmarket-prepared p { margin: 5px 0 0; }
+.taskmarket-prepared a { overflow-wrap: anywhere; }
+
 .side-heading { color: var(--ink); justify-content: space-between; margin-bottom: 15px; }
 .side-heading p { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
 .metric-row { border-top: 1px solid var(--line); color: var(--muted); display: flex; font-size: 13px; justify-content: space-between; padding: 12px 0; }
@@ -206,6 +227,8 @@ textarea { line-height: 1.45; resize: vertical; }
   .field-wide { grid-column: auto; }
   .surface-footer { align-items: flex-start; flex-direction: column; }
   .surface-footer .button { width: 100%; }
+  .taskmarket-controls { align-items: stretch; flex-direction: column; }
+  .taskmarket-controls .button { width: 100%; }
   .side-column { grid-template-columns: 1fr; }
   .policy-summary { line-height: 1.5; }
 }
