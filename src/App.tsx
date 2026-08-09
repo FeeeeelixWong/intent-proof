@@ -37,7 +37,7 @@ import {
   defaultChainRegistry,
   validateReceiptWithDefaultRegistry,
 } from './domain/chain-registry'
-import { shortHash, type AuditReceipt } from './domain/receipt'
+import { shortHash, type AuditReceipt, type LegacySolanaAction } from './domain/receipt'
 import { createReceiptAppender } from './domain/receipt-chain'
 import {
   addLamports,
@@ -89,8 +89,15 @@ function statusLabel(status: AuditReceipt['status']): string {
   return 'Blocked locally'
 }
 
-function isSolanaAction(action: AuditReceipt['action']): action is ActionDraft {
-  return 'amountLamports' in action
+function isSolanaAction(action: AuditReceipt['action']): action is ActionDraft | LegacySolanaAction {
+  return !('kind' in action)
+}
+
+function receiptAmountLamports(action: ActionDraft | LegacySolanaAction): string | null {
+  if ('amountLamports' in action) {
+    return parseLamports(action.amountLamports)?.toString() ?? null
+  }
+  return Number.isFinite(action.amountSol) ? parseSolAmount(action.amountSol.toString()) : null
 }
 
 function receiptTransactionUrl(receipt: AuditReceipt): string | null {
@@ -145,8 +152,8 @@ function App() {
       .filter((receipt) => receipt.status === 'submitted' && isSolanaAction(receipt.action))
       .reduce((sum, receipt) => {
         if (!isSolanaAction(receipt.action)) return sum
-        const amountLamports = parseLamports(receipt.action.amountLamports)
-        return amountLamports === null ? sum : addLamports(sum, amountLamports.toString())
+        const amountLamports = receiptAmountLamports(receipt.action)
+        return amountLamports === null ? sum : addLamports(sum, amountLamports)
       }, '0'),
     [receipts],
   )
@@ -530,7 +537,7 @@ function App() {
                     <div className="receipt-top"><span className={`receipt-status ${receipt.status}`}>{statusLabel(receipt.status)}</span><time>{new Date(receipt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time></div>
                     <p>
                       {isSolanaAction(receipt.action)
-                        ? `${displayLamports(receipt.action.amountLamports)} · ${compactAddress(receipt.action.recipient || 'No recipient')}`
+                        ? `${'amountLamports' in receipt.action ? displayLamports(receipt.action.amountLamports) : `${receipt.action.amountSol} SOL`} · ${compactAddress(receipt.action.recipient || 'No recipient')}`
                         : `${receipt.action.amount} ${receipt.action.asset} · ${compactAddress(receipt.action.payTo)}`}
                     </p>
                     <code>{shortHash(receipt.hash)}</code>

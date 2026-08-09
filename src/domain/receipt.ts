@@ -12,7 +12,16 @@ export type X402PaymentAction = {
   resource: string
 }
 
-export type ReceiptAction = ActionDraft | X402PaymentAction
+// Kept for verification/import of receipts emitted before the lamport migration.
+// New policy and transaction paths must use ActionDraft.amountLamports.
+export type LegacySolanaAction = {
+  amountSol: number
+  intentNote: string
+  network: string
+  recipient: string
+}
+
+export type ReceiptAction = ActionDraft | LegacySolanaAction | X402PaymentAction
 export type AuditDecision = PolicyDecision['decision'] | 'DENY' | 'HOLD'
 export type AuditStatus = 'approved' | 'blocked' | 'failed' | 'settled' | 'submitted'
 
@@ -68,6 +77,10 @@ export function isX402PaymentAction(action: ReceiptAction): action is X402Paymen
   return 'kind' in action && action.kind === 'x402-payment'
 }
 
+export function isLegacySolanaAction(action: ReceiptAction): action is LegacySolanaAction {
+  return !isX402PaymentAction(action) && 'amountSol' in action
+}
+
 export function receiptBindingIssues(
   receipt: Pick<AuditReceipt, 'action' | 'evidence' | 'status' | 'transactionSignature'>,
 ): string[] {
@@ -75,7 +88,9 @@ export function receiptBindingIssues(
 
   if (!isX402PaymentAction(receipt.action)
     && receipt.status !== 'blocked'
-    && parseLamports(receipt.action.amountLamports) === null) {
+    && (isLegacySolanaAction(receipt.action)
+      ? !Number.isFinite(receipt.action.amountSol) || receipt.action.amountSol <= 0
+      : parseLamports(receipt.action.amountLamports) === null)) {
     issues.push('A non-blocked Solana receipt must contain a canonical safe lamport amount.')
   }
 

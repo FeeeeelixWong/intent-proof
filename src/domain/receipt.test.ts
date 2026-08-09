@@ -13,6 +13,13 @@ const action = {
   recipient: 'Recipient111',
 }
 
+const legacyAction = {
+  amountSol: 0.025,
+  intentNote: 'Pay approved devnet invoice',
+  network: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1',
+  recipient: 'Recipient111',
+}
+
 describe('audit receipts', () => {
   it('creates a hash-linked chain for sequential decisions', async () => {
     const first = await createReceipt({
@@ -81,5 +88,19 @@ describe('audit receipts', () => {
       reason: 'All local safeguards passed.',
       status: 'approved',
     })).rejects.toThrow('canonical safe lamport amount')
+  })
+
+  it('continues to create and hash legacy v1 receipts', async () => {
+    const receipt = await createReceipt({
+      action: legacyAction,
+      agentId: 'audit-agent.local',
+      decision: 'ALLOW',
+      previousHash: null,
+      reason: 'All local safeguards passed.',
+      status: 'approved',
+    })
+
+    expect(receipt.schema).toBe(AUDIT_RECEIPT_SCHEMA)
+    expect(receipt.hash).toMatch(/^[a-f0-9]{64}$/)
   })
 })
