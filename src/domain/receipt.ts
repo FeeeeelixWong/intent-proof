@@ -1,4 +1,5 @@
 import type { ActionDraft, PolicyDecision } from './policy'
+import { parseLamports } from './sol-amount'
 
 export const AUDIT_RECEIPT_SCHEMA = 'intentproof.audit-receipt.v1' as const
 
@@ -71,6 +72,12 @@ export function receiptBindingIssues(
   receipt: Pick<AuditReceipt, 'action' | 'evidence' | 'status' | 'transactionSignature'>,
 ): string[] {
   const issues: string[] = []
+
+  if (!isX402PaymentAction(receipt.action)
+    && receipt.status !== 'blocked'
+    && parseLamports(receipt.action.amountLamports) === null) {
+    issues.push('A non-blocked Solana receipt must contain a canonical safe lamport amount.')
+  }
 
   if (!receipt.evidence) {
     if (receipt.status === 'settled') {

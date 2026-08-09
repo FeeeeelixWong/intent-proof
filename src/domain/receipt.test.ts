@@ -7,7 +7,7 @@ import {
 } from './receipt'
 
 const action = {
-  amountSol: 0.025,
+  amountLamports: '25000000',
   intentNote: 'Pay approved devnet invoice',
   network: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1',
   recipient: 'Recipient111',
@@ -49,7 +49,7 @@ describe('audit receipts', () => {
       status: 'approved',
     })
     const { hash, ...hashableReceipt } = receipt
-    if (!('amountSol' in hashableReceipt.action)) {
+    if (!('amountLamports' in hashableReceipt.action)) {
       throw new Error('Expected a Solana action.')
     }
     const reorderedReceipt = {
@@ -64,11 +64,22 @@ describe('audit receipts', () => {
       action: {
         recipient: hashableReceipt.action.recipient,
         intentNote: hashableReceipt.action.intentNote,
-        amountSol: hashableReceipt.action.amountSol,
+        amountLamports: hashableReceipt.action.amountLamports,
         network: hashableReceipt.action.network,
       },
     }
 
     await expect(calculateReceiptHash(reorderedReceipt)).resolves.toBe(hash)
+  })
+
+  it('rejects an unsafe amount on a non-blocked receipt', async () => {
+    await expect(createReceipt({
+      action: { ...action, amountLamports: '' },
+      agentId: 'audit-agent.local',
+      decision: 'ALLOW',
+      previousHash: null,
+      reason: 'All local safeguards passed.',
+      status: 'approved',
+    })).rejects.toThrow('canonical safe lamport amount')
   })
 })

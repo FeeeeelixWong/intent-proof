@@ -34,6 +34,16 @@ export {
 } from './receipt'
 export { createReceiptAppender } from './receipt-chain'
 export {
+  LAMPORTS_PER_SOL,
+  addLamports,
+  compareLamports,
+  formatLamports,
+  lamportsToNumber,
+  parseLamports,
+  parseSolAmount,
+  type Lamports,
+} from './sol-amount'
+export {
   RECEIPT_LEDGER_SCHEMA,
   createReceiptLedgerBundle,
   verifyReceiptChain,

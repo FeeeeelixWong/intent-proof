@@ -239,7 +239,7 @@ describe('chain adapter registry', () => {
   it('keeps blocked malformed addresses as valid evidence of a denied attempt', async () => {
     const receipt = await createReceipt({
       action: {
-        amountSol: 0.01,
+        amountLamports: '10000000',
         intentNote: 'Blocked invalid recipient',
         network: NETWORK_IDS.solanaDevnet,
         recipient: '',

@@ -27,6 +27,8 @@ Hashes are lowercase hexadecimal SHA-256 digests. Receipt objects are normalized
 | `previousHash` | Hash of the immediately preceding committed receipt |
 | `hash` | SHA-256 digest of every other receipt field |
 
+Solana action amounts are stored as `amountLamports`, a canonical non-negative decimal string. The policy and transaction paths use this integer representation; SOL decimals are parsed once at the UI boundary and are never used for budget arithmetic. Non-blocked Solana receipts with invalid or unsafe lamports are rejected.
+
 ## x402 evidence
 
 An x402 receipt may bind:

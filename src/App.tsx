@@ -40,6 +40,13 @@ import {
 import { shortHash, type AuditReceipt } from './domain/receipt'
 import { createReceiptAppender } from './domain/receipt-chain'
 import {
+  addLamports,
+  formatLamports,
+  lamportsToNumber,
+  parseLamports,
+  parseSolAmount,
+} from './domain/sol-amount'
+import {
   createReceiptLedgerBundle,
   verifyReceiptChain,
   verifyReceiptLedgerBundle,
@@ -61,13 +68,17 @@ const agentId = 'audit-agent.local'
 
 const defaultPolicy: AgentPolicy = {
   allowedRecipients: [],
-  dailyLimitSol: 0.2,
-  maxAmountSol: 0.05,
+  dailyLimitLamports: '200000000',
+  maxAmountLamports: '50000000',
   requireIntentNote: true,
 }
 
 function compactAddress(value: string): string {
   return value.length > 14 ? `${value.slice(0, 6)}...${value.slice(-6)}` : value
+}
+
+function displayLamports(value: string): string {
+  return parseLamports(value) === null ? 'Invalid amount' : `${formatLamports(value)} SOL`
 }
 
 function statusLabel(status: AuditReceipt['status']): string {
@@ -79,7 +90,7 @@ function statusLabel(status: AuditReceipt['status']): string {
 }
 
 function isSolanaAction(action: AuditReceipt['action']): action is ActionDraft {
-  return 'amountSol' in action
+  return 'amountLamports' in action
 }
 
 function receiptTransactionUrl(receipt: AuditReceipt): string | null {
@@ -118,7 +129,7 @@ function App() {
 
   const actionDraft = useMemo<ActionDraft>(
     () => ({
-      amountSol: Number(amount),
+      amountLamports: parseSolAmount(amount) ?? '',
       intentNote,
       network: NETWORK_IDS.solanaDevnet,
       recipient,
@@ -129,10 +140,14 @@ function App() {
   const isAssessmentCurrent = decision?.decision === 'ALLOW'
     && assessedActionFingerprint === currentActionFingerprint
     && approvedActionFingerprintRef.current === currentActionFingerprint
-  const spentTodaySol = useMemo(
+  const spentTodayLamports = useMemo(
     () => receipts
       .filter((receipt) => receipt.status === 'submitted' && isSolanaAction(receipt.action))
-      .reduce((sum, receipt) => sum + (isSolanaAction(receipt.action) ? receipt.action.amountSol : 0), 0),
+      .reduce((sum, receipt) => {
+        if (!isSolanaAction(receipt.action)) return sum
+        const amountLamports = parseLamports(receipt.action.amountLamports)
+        return amountLamports === null ? sum : addLamports(sum, amountLamports.toString())
+      }, '0'),
     [receipts],
   )
   useEffect(() => {
@@ -232,7 +247,7 @@ function App() {
     setIsAssessing(true)
     try {
       const assessedAction = { ...actionDraft }
-      const nextDecision = evaluateAction(assessedAction, policy, spentTodaySol)
+      const nextDecision = evaluateAction(assessedAction, policy, spentTodayLamports)
       const fingerprint = actionFingerprint(assessedAction)
       setDecision(nextDecision)
       setAssessedActionFingerprint(fingerprint)
@@ -267,7 +282,7 @@ function App() {
       return
     }
 
-    const finalDecision = evaluateAction(actionDraft, policy, spentTodaySol)
+    const finalDecision = evaluateAction(actionDraft, policy, spentTodayLamports)
     if (finalDecision.decision !== 'ALLOW') {
       setDecision(finalDecision)
       setAssessedActionFingerprint(null)
@@ -292,7 +307,7 @@ function App() {
       const transaction = new solana.Transaction().add(
         solana.SystemProgram.transfer({
           fromPubkey: payer,
-          lamports: Math.round(actionDraft.amountSol * solana.LAMPORTS_PER_SOL),
+          lamports: lamportsToNumber(actionDraft.amountLamports),
           toPubkey: recipientKey,
         }),
         new solana.TransactionInstruction({
@@ -466,7 +481,7 @@ function App() {
             )}
 
             <div className="surface-footer">
-              <span className="policy-summary">Per action <strong>{policy.maxAmountSol.toFixed(3)} SOL</strong> · Daily <strong>{policy.dailyLimitSol.toFixed(3)} SOL</strong></span>
+              <span className="policy-summary">Per action <strong>{formatLamports(policy.maxAmountLamports)} SOL</strong> · Daily <strong>{formatLamports(policy.dailyLimitLamports)} SOL</strong></span>
               <button className="button primary" type="button" disabled={!isAssessmentCurrent || isSending} onClick={() => void sendApprovedAction()}>
                 {isSending ? <LoaderCircle className="spin" size={17} /> : <Send size={17} />}
                 {isSending ? 'Submitting...' : 'Approve & send on Devnet'}
@@ -478,8 +493,8 @@ function App() {
         <aside className="side-column" aria-label="Policy and receipt ledger">
           <section className="side-surface">
             <div className="side-heading"><h2>Active guardrails</h2><ShieldCheck size={18} /></div>
-            <div className="metric-row"><span>Per-action ceiling</span><strong>{policy.maxAmountSol.toFixed(3)} SOL</strong></div>
-            <div className="metric-row"><span>Daily committed</span><strong>{spentTodaySol.toFixed(3)} / {policy.dailyLimitSol.toFixed(3)}</strong></div>
+            <div className="metric-row"><span>Per-action ceiling</span><strong>{formatLamports(policy.maxAmountLamports)} SOL</strong></div>
+            <div className="metric-row"><span>Daily committed</span><strong>{formatLamports(spentTodayLamports)} / {formatLamports(policy.dailyLimitLamports)}</strong></div>
             <div className="metric-row"><span>Memo evidence</span><strong>Required</strong></div>
             <div className="metric-row"><span>Evidence registry</span><strong>{defaultChainRegistry.listNetworks().length} networks</strong></div>
             <div className="allowlist">
@@ -515,7 +530,7 @@ function App() {
                     <div className="receipt-top"><span className={`receipt-status ${receipt.status}`}>{statusLabel(receipt.status)}</span><time>{new Date(receipt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time></div>
                     <p>
                       {isSolanaAction(receipt.action)
-                        ? `${receipt.action.amountSol.toFixed(3)} SOL · ${compactAddress(receipt.action.recipient || 'No recipient')}`
+                        ? `${displayLamports(receipt.action.amountLamports)} · ${compactAddress(receipt.action.recipient || 'No recipient')}`
                         : `${receipt.action.amount} ${receipt.action.asset} · ${compactAddress(receipt.action.payTo)}`}
                     </p>
                     <code>{shortHash(receipt.hash)}</code>

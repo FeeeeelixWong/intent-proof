@@ -1,12 +1,14 @@
+import { formatLamports, parseLamports } from './sol-amount'
+
 export type AgentPolicy = {
   allowedRecipients: string[]
-  maxAmountSol: number
-  dailyLimitSol: number
+  maxAmountLamports: string
+  dailyLimitLamports: string
   requireIntentNote: boolean
 }
 
 export type ActionDraft = {
-  amountSol: number
+  amountLamports: string
   intentNote: string
   network: string
   recipient: string
@@ -23,7 +25,7 @@ const trimAddress = (value: string) => value.trim()
 // An approval is only valid for the exact action the operator assessed.
 export function actionFingerprint(draft: ActionDraft): string {
   return JSON.stringify({
-    amountSol: draft.amountSol,
+    amountLamports: parseLamports(draft.amountLamports)?.toString() ?? draft.amountLamports.trim(),
     intentNote: draft.intentNote.trim(),
     network: draft.network,
     recipient: trimAddress(draft.recipient),
@@ -33,13 +35,22 @@ export function actionFingerprint(draft: ActionDraft): string {
 export function evaluateAction(
   draft: ActionDraft,
   policy: AgentPolicy,
-  spentTodaySol: number,
+  spentTodayLamports: string,
 ): PolicyDecision {
   const recipient = trimAddress(draft.recipient)
-  const hasValidAmount = Number.isFinite(draft.amountSol) && draft.amountSol > 0
+  const amountLamports = parseLamports(draft.amountLamports)
+  const maxAmountLamports = parseLamports(policy.maxAmountLamports)
+  const dailyLimitLamports = parseLamports(policy.dailyLimitLamports)
+  const spentLamports = parseLamports(spentTodayLamports)
+  const hasValidAmount = amountLamports !== null && amountLamports > 0n
   const recipientAllowed = policy.allowedRecipients.includes(recipient)
-  const underTransferCap = hasValidAmount && draft.amountSol <= policy.maxAmountSol
-  const underDailyCap = hasValidAmount && spentTodaySol + draft.amountSol <= policy.dailyLimitSol
+  const underTransferCap = hasValidAmount
+    && maxAmountLamports !== null
+    && amountLamports <= maxAmountLamports
+  const underDailyCap = hasValidAmount
+    && dailyLimitLamports !== null
+    && spentLamports !== null
+    && amountLamports + spentLamports <= dailyLimitLamports
   const intentRecorded = !policy.requireIntentNote || draft.intentNote.trim().length >= 12
 
   const checks = [
@@ -51,12 +62,12 @@ export function evaluateAction(
     {
       label: 'Per-action budget',
       passed: underTransferCap,
-      detail: `Limit ${policy.maxAmountSol.toFixed(3)} SOL per action.`,
+      detail: `Limit ${maxAmountLamports === null ? 'invalid' : formatLamports(policy.maxAmountLamports)} SOL per action.`,
     },
     {
       label: 'Daily budget',
       passed: underDailyCap,
-      detail: `${spentTodaySol.toFixed(3)} / ${policy.dailyLimitSol.toFixed(3)} SOL committed today.`,
+      detail: `${spentLamports === null ? 'invalid' : formatLamports(spentTodayLamports)} / ${dailyLimitLamports === null ? 'invalid' : formatLamports(policy.dailyLimitLamports)} SOL committed today.`,
     },
     {
       label: 'Intent evidence',
