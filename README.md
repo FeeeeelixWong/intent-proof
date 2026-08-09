@@ -19,6 +19,7 @@ The hosted product is a working Solana Devnet demonstration. The domain layer al
 ## What it does
 
 - Evaluates an agent's proposed SOL transfer against a local recipient allowlist, per-action budget, daily budget, and required intent note.
+- Parses SOL input once into canonical lamports and reuses that exact integer for policy checks, approval fingerprints, receipts, daily accounting, and the Devnet transaction.
 - Binds each approval to the exact recipient, amount, and intent note that was assessed; editing any of them requires another policy decision.
 - Builds and signs a real **Solana Devnet** transfer only after the local policy allows it and the operator confirms it in Phantom.
 - Adds the declared intent as an on-chain Memo instruction.
@@ -29,6 +30,8 @@ The hosted product is a working Solana Devnet demonstration. The domain layer al
 - Resolves network validation and explorer links through pluggable namespace adapters instead of hard-coded chain branches.
 
 IntentProof never receives a seed phrase or private key. Wallet signing remains inside the user's Phantom extension.
+
+SOL amounts are accepted as strict decimal strings with at most nine fractional digits. Scientific notation, zero/negative values, surrounding whitespace, and values outside the safe transaction range are rejected. Serialized Solana actions store the exact lamport amount as a decimal string; SOL formatting is display-only.
 
 ## Product boundary
 

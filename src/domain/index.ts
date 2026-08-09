@@ -20,6 +20,7 @@ export {
   calculateReceiptHash,
   canonicalJson,
   createReceipt,
+  isLegacySolanaAction,
   isX402PaymentAction,
   receiptBindingIssues,
   shortHash,
@@ -27,12 +28,23 @@ export {
   type AuditReceipt,
   type AuditReceiptInput,
   type AuditStatus,
+  type LegacySolanaAction,
   type ReceiptAction,
   type SolanaTransferEvidence,
   type X402PaymentAction,
   type X402PaymentEvidence,
 } from './receipt'
 export { createReceiptAppender } from './receipt-chain'
+export {
+  LAMPORTS_PER_SOL,
+  addLamports,
+  compareLamports,
+  formatLamports,
+  lamportsToNumber,
+  parseLamports,
+  parseSolAmount,
+  type Lamports,
+} from './sol-amount'
 export {
   RECEIPT_LEDGER_SCHEMA,
   createReceiptLedgerBundle,
