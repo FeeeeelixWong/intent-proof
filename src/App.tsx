@@ -44,6 +44,7 @@ import {
   verifyReceiptChain,
   verifyReceiptLedgerBundle,
 } from './domain/receipt-ledger'
+import { TaskMarketPanel } from './TaskMarketPanel'
 import './App.css'
 
 declare global {
@@ -473,6 +474,8 @@ function App() {
               </button>
             </div>
           </section>
+
+          <TaskMarketPanel />
         </section>
 
         <aside className="side-column" aria-label="Policy and receipt ledger">
