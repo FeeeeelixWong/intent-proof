@@ -185,6 +185,92 @@ export async function createReceipt(input: AuditReceiptInput): Promise<AuditRece
   }
 }
 
+export type ReceiptChainVerificationResult = {
+  /** Index of the first receipt that failed verification. Present only when `valid` is false. */
+  invalidIndex?: number
+  /** Human-readable reason the chain failed verification. Present only when `valid` is false. */
+  reason?: string
+  valid: boolean
+}
+
+/**
+ * Deterministically verifies an exported audit receipt chain.
+ *
+ * For every receipt it recomputes the hash from the exact same fields `createReceipt`
+ * hashed — everything except `hash`, including `transactionSignature` when it is
+ * present — and reports failure when content or links were modified after creation.
+ * It also requires the first receipt to have `previousHash: null` and every later
+ * receipt's `previousHash` to equal the preceding receipt's hash.
+ *
+ * An empty chain is valid: there are no links to break and no hashes to mismatch.
+ * Ordinary invalid input (non-array input, non-object entries, broken links,
+ * tampered content) yields `{ valid: false }` — never a throw.
+ */
+export async function verifyReceiptChain(
+  receipts: readonly AuditReceipt[],
+): Promise<ReceiptChainVerificationResult> {
+  if (!Array.isArray(receipts)) {
+    return {
+      reason: 'The receipt chain must be an array of audit receipts.',
+      valid: false,
+    }
+  }
+
+  for (let index = 0; index < receipts.length; index += 1) {
+    const receipt = receipts[index]
+
+    if (receipt === null || typeof receipt !== 'object') {
+      return {
+        invalidIndex: index,
+        reason: `Receipt ${index} is not a valid receipt object.`,
+        valid: false,
+      }
+    }
+
+    if (index === 0) {
+      if (receipt.previousHash !== null) {
+        return {
+          invalidIndex: index,
+          reason: 'The first receipt in a chain must have previousHash set to null.',
+          valid: false,
+        }
+      }
+    } else if (receipt.previousHash !== receipts[index - 1].hash) {
+      return {
+        invalidIndex: index,
+        reason: 'The receipt does not link to the immediately preceding receipt hash.',
+        valid: false,
+      }
+    }
+
+    // Recompute from the same payload createReceipt hashed: every field except
+    // `hash`. transactionSignature is intentionally included when present, so
+    // adding, removing, or editing it after creation invalidates the receipt.
+    const { hash, ...hashableReceipt } = receipt
+    let expectedHash: string
+    try {
+      expectedHash = await calculateReceiptHash(hashableReceipt)
+    } catch {
+      // Content that cannot be canonicalized (non-finite numbers, bigint
+      // values, circular structures, ...) is invalid input, not a throw.
+      return {
+        invalidIndex: index,
+        reason: 'The receipt content could not be hashed (hash-recompute-failed).',
+        valid: false,
+      }
+    }
+    if (hash !== expectedHash) {
+      return {
+        invalidIndex: index,
+        reason: 'The receipt content does not match its claimed hash and may have been modified after creation.',
+        valid: false,
+      }
+    }
+  }
+
+  return { valid: true }
+}
+
 export function shortHash(hash: string | null | undefined): string {
   if (!hash) return 'Genesis'
   return `${hash.slice(0, 8)}...${hash.slice(-6)}`
